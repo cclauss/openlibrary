@@ -41,10 +41,10 @@ def test_write_image(prefix, path, image_dir):
 
 def test_bad_image(image_dir):
     prefix = config.data_root + '/bad'
-    assert coverlib.write_image('', prefix) == None
+    assert coverlib.write_image('', prefix) is None
 
     prefix = config.data_root + '/bad'
-    assert coverlib.write_image('not an image', prefix) == None
+    assert coverlib.write_image('not an image', prefix) is None
 
 def test_resize_image_aspect_ratio():
     """make sure the aspect-ratio is maintained"""
@@ -81,31 +81,31 @@ def test_server_image(image_dir):
         def serve_image(d, size):
             return b"".join(coverlib.read_image(d, size))
 
-        assert serve_image(d, '') == 'main image'
-        assert serve_image(d, None) == 'main image'
+        assert serve_image(d, '') == b'main image'
+        assert serve_image(d, None) == b'main image'
 
-        assert serve_image(d, 'S') == 'S image'
-        assert serve_image(d, 'M') == 'M image'
-        assert serve_image(d, 'L') == 'L image'
+        assert serve_image(d, 'S') == b'S image'
+        assert serve_image(d, 'M') == b'M image'
+        assert serve_image(d, 'L') == b'L image'
 
-        assert serve_image(d, 's') == 'S image'
-        assert serve_image(d, 'm') == 'M image'
-        assert serve_image(d, 'l') == 'L image'
+        assert serve_image(d, 's') == b'S image'
+        assert serve_image(d, 'm') == b'M image'
+        assert serve_image(d, 'l') == b'L image'
 
     # test with regular images
-    write('localdisk/a.jpg', 'main image')
-    write('localdisk/a-S.jpg', 'S image')
-    write('localdisk/a-M.jpg', 'M image')
-    write('localdisk/a-L.jpg', 'L image')
+    write('localdisk/a.jpg', b'main image')
+    write('localdisk/a-S.jpg', b'S image')
+    write('localdisk/a-M.jpg', b'M image')
+    write('localdisk/a-L.jpg', b'L image')
 
     d = web.storage(id=1, filename='a.jpg', filename_s='a-S.jpg', filename_m='a-M.jpg', filename_l='a-L.jpg')
     do_test(d)
 
     # test with offsets
-    write('items/covers_0000/covers_0000_00.tar', 'xxmain imagexx')
-    write('items/s_covers_0000/s_covers_0000_00.tar', 'xxS imagexx')
-    write('items/m_covers_0000/m_covers_0000_00.tar', 'xxM imagexx')
-    write('items/l_covers_0000/l_covers_0000_00.tar', 'xxL imagexx')
+    write('items/covers_0000/covers_0000_00.tar', b'xxmain imagexx')
+    write('items/s_covers_0000/s_covers_0000_00.tar', b'xxS imagexx')
+    write('items/m_covers_0000/m_covers_0000_00.tar', b'xxM imagexx')
+    write('items/l_covers_0000/l_covers_0000_00.tar', b'xxL imagexx')
 
     d = web.storage(
         id=1,
