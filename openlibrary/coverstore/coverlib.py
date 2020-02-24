@@ -8,7 +8,7 @@ try:
     from PIL import Image
 except ImportError:
     import Image
-from six import StringIO
+from six import BytesIO
 import web
 
 from openlibrary.coverstore import config, db
@@ -61,11 +61,11 @@ def write_image(data, prefix):
         os.makedirs(dirname)
     try:
         # save original image
-        f = open(path_prefix + '.jpg', 'w')
+        f = open(path_prefix + '.jpg', 'wb')
         f.write(data)
         f.close()
 
-        img = Image.open(StringIO(data))
+        img = Image.open(BytesIO(data))
         if img.mode != 'RGB':
             img = img.convert('RGB')
 
