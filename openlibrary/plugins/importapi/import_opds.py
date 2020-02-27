@@ -1,9 +1,8 @@
 """
 OL Import API OPDS parser
 """
-from __future__ import absolute_import
 
-from . import import_edition_builder
+from openlibrary.plugins.importapi import import_edition_builder
 
 import six
 

@@ -1,5 +1,4 @@
 #!/usr/bin/python
-from __future__ import absolute_import
 from xml.etree.cElementTree import ElementTree
 from six.moves import cStringIO as StringIO
 import os
@@ -8,7 +7,7 @@ from collections import defaultdict
 import cgi
 import web
 import simplejson
-from .facet_hash import facet_token
+from openlibrary.plugins.search.facet_hash import facet_token
 import pdb
 
 import six
@@ -193,7 +192,7 @@ class Solr_client(object):
                                              rows=1, wt='json'))
         facet_set = set(facet_list)
         for d in m['response']['docs']:
-            for k,vx in d.items():
+            for k,vx in d.iteritems():
                 kfs = k in facet_set
                 # if not kfs: continue
                 vvx = {str:(vx,), list:vx}.get(type(vx),())
@@ -201,16 +200,6 @@ class Solr_client(object):
                     if facet_token(k,v) == token:
                         return (k,v)
         return None
-
-    def isearch(self, query, loc=0):
-        # iterator interface to search
-        while True:
-            s = search(self, query, start=loc)
-            if len(s) == 0: return
-            loc += len(s)
-            for y in s:
-                if not y.startswith('OCA/'):
-                    yield y
 
     def search(self, query, **params):
         # advanced search: directly post a Solr search which uses fieldnames etc.

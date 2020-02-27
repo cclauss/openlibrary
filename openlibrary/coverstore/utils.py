@@ -1,5 +1,4 @@
 """Utilities for coverstore"""
-from __future__ import absolute_import
 
 import os
 import mimetypes
@@ -7,19 +6,21 @@ import simplejson
 import web
 
 import random
+import socket
 import string
 
 from six.moves.urllib.parse import splitquery, unquote, unquote_plus
 from six.moves.urllib.parse import urlencode as real_urlencode
 from six.moves.urllib.request import Request, urlopen
 
-from . import config
-from . import oldb
+from openlibrary.coverstore import config, oldb
 
 try:
     file           # Python 2
 except NameError:  # Python 3
     from io import IOBase as file
+
+socket.setdefaulttimeout(10.0)
 
 
 def safeint(value, default=None):

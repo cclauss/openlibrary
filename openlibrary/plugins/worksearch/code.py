@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import web
 import re
 from lxml.etree import XML, XMLSyntaxError
@@ -804,10 +803,10 @@ class search_json(delegate.page):
         return delegate.RawText(json.dumps(response, indent=True))
 
 def setup():
-    from . import searchapi
+    from openlibrary.plugins.worksearch import searchapi
     searchapi.setup()
 
-    from . import subjects
+    from openlibrary.plugins.worksearch import subjects
 
     # subjects module needs read_author_facet and solr_select_url.
     # Importing this module to access them will result in circular import.
@@ -818,7 +817,7 @@ def setup():
 
     subjects.setup()
 
-    from . import publishers, languages
+    from openlibrary.plugins.worksearch import languages, publishers
     publishers.setup()
     languages.setup()
 
