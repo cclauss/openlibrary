@@ -70,6 +70,6 @@ endif
 test:
 	npm test
 	# workaround for pytest error "Defining 'pytest_plugins' in a non-top-level conftest"
-	rm vendor/infogami/infogami/conftest.py infogami/infobase/tests/conftest.py
+	rm -f vendor/infogami/infogami/conftest.py infogami/infobase/tests/conftest.py
 	$(PYTHON) -m pip install pyyaml selenium splinter
 	pytest .
