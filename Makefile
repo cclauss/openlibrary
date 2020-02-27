@@ -70,7 +70,5 @@ endif
 test:
 	npm test
 	# workaround for pytest error "Defining 'pytest_plugins' in a non-top-level conftest"
-	pwd
-	ls
-	rm vendor/infogami/infogami/conftest.py
+	rm vendor/infogami/infogami/conftest.py infogami/infobase/tests/conftest.py
 	pytest .
