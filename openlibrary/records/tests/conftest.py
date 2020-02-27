@@ -1,9 +1,6 @@
-def pytest_funcarg__compare_results(request):
-    """Returns a function to compare two objects d1 an d2 recursively
-    skipping the 'key', "last_modified" and "revision" keys if
-    present"""
-    def compare_results(d1, d2):
-
+def compare_results(request):
+        """Compare two objects d1 an d2 recursively skipping the 'key', "last_modified"
+        and "revision" keys if present"""
         for i in ["revision", "last_modified", "key"]:
             if i in d1: d1.pop(i)
             if i in d2: d2.pop(i)
@@ -23,7 +20,7 @@ def pytest_funcarg__compare_results(request):
                     return False
             return True
 
-        if isinstance(d1, dict) and isinstance(d2, dict) and len(d1.keys()) == len(d2.keys()):
+        if isinstance(d1, dict) and isinstance(d2, dict) and len(d1) == len(d2):
             for k,v in d1.iteritems():
                 # compare_results.depth += 1
                 ret = compare_results(d1.get(k), d2.get(k))
@@ -35,6 +32,3 @@ def pytest_funcarg__compare_results(request):
                     return False
             return True
         return False
-
-    # compare_results.depth = 0
-    return compare_results
