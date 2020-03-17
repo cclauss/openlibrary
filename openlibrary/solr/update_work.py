@@ -509,7 +509,7 @@ class SolrProcessor:
                            for v in e[db_key])
             add_list(solr_key, values)
 
-        add_list("isbn", self.get_isbns(editions))
+        add_list("isbn", sorted(self.get_isbns(editions)))
         add("last_modified_i", self.get_last_modified(w, editions))
 
         self.add_ebook_info(d, editions)
@@ -637,11 +637,11 @@ class SolrProcessor:
 
         has_fulltext = any(e.get('ocaid', None) for e in editions)
 
-        add_list('ia', ia_list)
+        add_list('ia', sorted(ia_list))
         if has_fulltext:
             add('public_scan_b', public_scan)
         if all_collection:
-            add('ia_collection_s', ';'.join(all_collection))
+            add('ia_collection_s', ';'.join(sorted(all_collection)))
         if lending_edition:
             add('lending_edition_s', lending_edition)
             add('lending_identifier_s', lending_ia_identifier)
