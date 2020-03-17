@@ -294,7 +294,7 @@ class Test_build_data:
         assert d['public_scan_b'] == True
         assert d['printdisabled_s'] == 'OL4M'
         assert d['lending_edition_s'] == 'OL3M'
-        assert d['ia'] == ['foo00bar', 'foo01bar', 'foo02bar']
+        assert sorted(d['ia']) == ['foo00bar', 'foo01bar', 'foo02bar']
         assert sorted(d['ia_collection_s'].split(";")) == ["americana", "inlibrary", "lendinglibrary", "printdisabled"]
 
         assert d['edition_count'] == 4
