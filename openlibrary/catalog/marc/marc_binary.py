@@ -151,11 +151,11 @@ class MarcBinary(MarcBase):
         for tag, line in handle_wrapped_lines(self.get_tag_lines(want)):
             if tag not in want:
                 continue
-            if tag.startswith('00'):
+            if tag.startswith(b'00'):
                 # marc_upei/marc-for-openlibrary-bigset.mrc:78997353:588
-                if tag == '008' and line == '':
+                if tag == b'008' and line == b'':
                     continue
-                assert line[-1] == '\x1e'
+                assert line[-1] == b'\x1e'
                 yield tag, line[:-1]
             else:
                 yield tag, BinaryDataField(self, line)
