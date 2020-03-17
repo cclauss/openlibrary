@@ -92,7 +92,7 @@ class BinaryDataField():
         return [v for k, v in self.get_subfields(want)]
 
     def get_all_subfields(self):
-        for i in self.line[3:-1].split('\x1f'):
+        for i in self.line[3:-1].split(b'\x1f'):
             if i:
                 j = self.translate(i)
                 yield j[0], j[1:]
