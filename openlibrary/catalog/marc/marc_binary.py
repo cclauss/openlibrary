@@ -174,18 +174,18 @@ class MarcBinary(MarcBase):
         data = self.data[self.directory_end:]
         # handle off-by-one errors in MARC records
         try:
-            if data[offset] != '\x1e':
-                offset += data[offset:].find('\x1e')
+            if data[offset] != b'\x1e':
+                offset += data[offset:].find(b'\x1e')
             last = offset+length
-            if data[last] != '\x1e':
-                length += data[last:].find('\x1e')
+            if data[last] != b'\x1e':
+                length += data[last:].find(b'\x1e')
         except IndexError:
             pass
         tag_line = data[offset + 1:offset + length + 1]
         if not line[0:2] == '00':
             # marc_western_washington_univ/wwu_bibs.mrc_revrev.mrc:636441290:1277
-            if tag_line[1:8] == '{llig}\x1f':
-                tag_line = tag_line[0] + u'\uFE20' + tag_line[7:]
+            if tag_line[1:8] == b'{llig}\x1f':
+                tag_line = tag_line[0] + b'\uFE20' + tag_line[7:]
         return tag_line
 
     def decode_field(self, field):
