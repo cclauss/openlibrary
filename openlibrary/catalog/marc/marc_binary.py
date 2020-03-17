@@ -114,7 +114,7 @@ class MarcBinary(MarcBase):
         if len(data) != length:
             raise BadLength("Record length %s does not match reported length %s." % (len(data), length))
         self.data = data
-        self.directory_end = data.find('\x1e')
+        self.directory_end = data.find(b'\x1e')
         if self.directory_end == -1:
             raise BadMARC("MARC directory not found")
 
