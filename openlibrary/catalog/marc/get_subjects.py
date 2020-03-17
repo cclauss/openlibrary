@@ -169,9 +169,5 @@ def subjects_for_work(rec):
         'time': 'subject_times',
         'person': 'subject_people',
     }
-
     subjects = four_types(read_subjects(rec))
-
-    return dict((field_map[k], list(v) for k, v in subjects.items())
-
-
+    return {field_map[k]: list(v) for k, v in subjects.items()}
