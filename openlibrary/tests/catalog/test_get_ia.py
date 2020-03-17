@@ -96,7 +96,7 @@ class TestGetIA():
         result = get_ia.get_marc_record_from_ia(item)
         assert isinstance(result, MarcBinary), \
             "%s: expected instanceof MarcBinary, got %s" % (item, type(result))
-        field_245 = next(result.read_fields(['245']))
+        field_245 = next(result.read_fields([b'245']))
         title = next(field_245[1].get_all_subfields())[1].encode('utf8')
         print("%s:\n\tUNICODE: [%s]\n\tTITLE: %s" % (item, result.leader()[9], title))
 
