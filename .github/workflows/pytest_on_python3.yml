@@ -11,5 +11,6 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: actions/setup-python@v1.2.0
+      - run: pushd vendor/infogami && git pull origin master && popd
       - run: pip install -r requirements_test.txt
       - run: source scripts/test-py3.sh
