@@ -168,7 +168,7 @@ class Test_build_data:
             make_edition(work, isbn_10=["123456789X"])
         ])
         d = build_data(work)
-        assert d['isbn'] == ['123456789X', '9781234567897']
+        assert sorted(d['isbn']) == ['123456789X', '9781234567897']
 
         update_work.data_provider = FakeDataProvider([
             work,
@@ -241,7 +241,7 @@ class Test_build_data:
         assert d['public_scan_b'] == False
         assert 'printdisabled_s' not in d
         assert d['lending_edition_s'] == 'OL1M'
-        assert d['ia'] == ['foo01bar', 'foo02bar']
+        assert sorted(d['ia']) == ['foo01bar', 'foo02bar']
         assert d['ia_collection_s'] == "lendinglibrary;americana;internetarchivebooks"
         assert d['edition_count'] == 2
         assert d['ebook_count_i'] == 2
@@ -294,7 +294,7 @@ class Test_build_data:
         assert d['public_scan_b'] == True
         assert d['printdisabled_s'] == 'OL4M'
         assert d['lending_edition_s'] == 'OL3M'
-        assert d['ia'] == ['foo00bar', 'foo01bar', 'foo02bar']
+        assert sorted(d['ia']) == ['foo00bar', 'foo01bar', 'foo02bar']
         assert sorted(d['ia_collection_s'].split(";")) == ["americana", "inlibrary", "lendinglibrary", "printdisabled"]
 
         assert d['edition_count'] == 4
