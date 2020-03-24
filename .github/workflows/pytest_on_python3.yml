@@ -14,7 +14,7 @@ jobs:
       # -run: pushd vendor/infogami && git remote -v
       # origin	git://github.com/internetarchive/infogami.git (fetch)
       # origin	git://github.com/internetarchive/infogami.git (push)
-      - run: pushd vendor/infogami && git fetch && && git pull && git pull --force origin master && popd
+      - run: pushd vendor/infogami && git fetch && git pull && git pull --force origin master && popd
       # - run: pushd vendor/infogami && git pull --force origin master && git pull upstream master && popd
       - run: pip install -r requirements_test.txt
       - run: source scripts/test-py3.sh
