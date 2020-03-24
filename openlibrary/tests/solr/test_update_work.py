@@ -423,3 +423,4 @@ class TestUpdateWork:
         assert len(requests) == 1
         assert isinstance(requests[0], update_work.DeleteRequest)
         assert requests[0].toxml() == b'<delete><query>key:/works/OL23W</query></delete>'
+
