@@ -278,7 +278,8 @@ class Test_build_data:
         assert d['printdisabled_s'] == 'OL1M'
         assert 'lending_edition_s' not in d
         assert d['ia'] == ['foo00bar']
-        assert d['ia_collection_s'] == "printdisabled;americana"
+        assert (sorted(d['ia_collection_s'].split(';')) ==
+                ["americana", "printdisabled"])
         assert d['edition_count'] == 1
         assert d['ebook_count_i'] == 1
 
