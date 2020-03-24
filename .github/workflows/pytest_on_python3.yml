@@ -1,0 +1,15 @@
+name: pytest_on_python3
+on:
+  pull_request:
+  push:
+  #  branches: [master]
+jobs:
+  pytest_on_python3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - uses: actions/setup-python@1
+      - run: pip install -r requirements_test.txt
+      - run: source scripts/test-py3.sh
