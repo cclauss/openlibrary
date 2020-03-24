@@ -92,7 +92,7 @@ class Test_build_data:
         d = build_data(work)
         assert d["key"] == "/works/OL1M"
         assert d["title"] == "Foo"
-        assert d["has_fulltext"] == False
+        assert d["has_fulltext"] is False
         assert d["edition_count"] == 0
 
     def test_edition_count_when_editions_on_work(self):
@@ -175,7 +175,7 @@ class Test_build_data:
             make_edition(work, isbn_10=["9781234567897"])
         ])
         d = build_data(work)
-        assert d['isbn'] == ['123456789X', '9781234567897']
+        assert sorted(d['isbn']) == ['123456789X', '9781234567897']
 
     def test_other_identifiers(self):
         work = make_work()
@@ -218,12 +218,13 @@ class Test_build_data:
                          _ia_meta={"collection": ['lendinglibrary', 'americana']})
         ])
         d = build_data(w)
-        assert d['has_fulltext'] == True
-        assert d['public_scan_b'] == False
+        assert d['has_fulltext'] is True
+        assert d['public_scan_b'] is False
         assert 'printdisabled_s' not in d
         assert d['lending_edition_s'] == 'OL1M'
         assert d['ia'] == ['foo00bar']
-        assert d['ia_collection_s'] == "lendinglibrary;americana"
+        assert (sorted(d['ia_collection_s'].split(';')) ==
+                ["americana", "lendinglibrary"])
         assert d['edition_count'] == 1
         assert d['ebook_count_i'] == 1
 
@@ -237,12 +238,13 @@ class Test_build_data:
                          _ia_meta={"collection": ['lendinglibrary', 'internetarchivebooks']})
         ])
         d = build_data(w)
-        assert d['has_fulltext'] == True
-        assert d['public_scan_b'] == False
+        assert d['has_fulltext'] is True
+        assert d['public_scan_b'] is False
         assert 'printdisabled_s' not in d
         assert d['lending_edition_s'] == 'OL1M'
         assert sorted(d['ia']) == ['foo01bar', 'foo02bar']
-        assert d['ia_collection_s'] == "lendinglibrary;americana;internetarchivebooks"
+        assert (sorted(d['ia_collection_s'].split(';')) ==
+                ["americana", "internetarchivebooks", "lendinglibrary"])
         assert d['edition_count'] == 2
         assert d['ebook_count_i'] == 2
 
@@ -254,8 +256,8 @@ class Test_build_data:
                          _ia_meta={"collection": ['printdisabled', 'inlibrary']})
         ])
         d = build_data(w)
-        assert d['has_fulltext'] == True
-        assert d['public_scan_b'] == False
+        assert d['has_fulltext'] is True
+        assert d['public_scan_b'] is False
         assert d['printdisabled_s'] == 'OL1M'
         assert d['lending_edition_s'] == 'OL1M'
         assert d['ia'] == ['foo00bar']
@@ -271,8 +273,8 @@ class Test_build_data:
                          _ia_meta={"collection": ['printdisabled', 'americana']})
         ])
         d = build_data(w)
-        assert d['has_fulltext'] == True
-        assert d['public_scan_b'] == False
+        assert d['has_fulltext'] is True
+        assert d['public_scan_b'] is False
         assert d['printdisabled_s'] == 'OL1M'
         assert 'lending_edition_s' not in d
         assert d['ia'] == ['foo00bar']
@@ -290,8 +292,8 @@ class Test_build_data:
             make_edition(w, key="/books/OL4M", ocaid='foo02bar', _ia_meta={"collection": ['printdisabled', 'inlibrary']})
         ])
         d = build_data(w)
-        assert d['has_fulltext'] == True
-        assert d['public_scan_b'] == True
+        assert d['has_fulltext'] is True
+        assert d['public_scan_b'] is True
         assert d['printdisabled_s'] == 'OL4M'
         assert d['lending_edition_s'] == 'OL3M'
         assert sorted(d['ia']) == ['foo00bar', 'foo01bar', 'foo02bar']
@@ -350,7 +352,7 @@ class Test_update_items():
         requests = update_work.update_author('/authors/OL23A')
         assert isinstance(requests, list)
         assert isinstance(requests[0], update_work.DeleteRequest)
-        assert requests[0].toxml() == '<delete><query>key:/authors/OL23A</query></delete>'
+        assert requests[0].toxml() == b'<delete><query>key:/authors/OL23A</query></delete>'
 
     def test_redirect_author(self):
         update_work.data_provider = FakeDataProvider([
@@ -359,7 +361,7 @@ class Test_update_items():
         requests = update_work.update_author('/authors/OL24A')
         assert isinstance(requests, list)
         assert isinstance(requests[0], update_work.DeleteRequest)
-        assert requests[0].toxml() == '<delete><query>key:/authors/OL24A</query></delete>'
+        assert requests[0].toxml() == b'<delete><query>key:/authors/OL24A</query></delete>'
 
     def test_update_author(self, monkeypatch):
         update_work.data_provider = FakeDataProvider([
@@ -394,9 +396,9 @@ class Test_update_items():
         olids = ['/works/OL1W', '/works/OL2W', '/works/OL3W']
         del_req = update_work.DeleteRequest(olids)
         assert isinstance(del_req, update_work.DeleteRequest)
-        assert del_req.toxml().startswith("<delete>")
+        assert del_req.toxml().startswith(b"<delete>")
         for olid in olids:
-            assert "<query>key:%s</query>" % olid in del_req.toxml()
+            assert b"<query>key:%s</query>" % olid in del_req.toxml()
 
 
 class TestUpdateWork:
@@ -408,16 +410,16 @@ class TestUpdateWork:
         requests = update_work.update_work({'key': '/works/OL23W', 'type': {'key': '/type/delete'}})
         assert len(requests) == 1
         assert isinstance(requests[0], update_work.DeleteRequest)
-        assert requests[0].toxml() == '<delete><query>key:/works/OL23W</query></delete>'
+        assert requests[0].toxml() == b'<delete><query>key:/works/OL23W</query></delete>'
 
     def test_delete_editions(self):
         requests = update_work.update_work({'key': '/works/OL23M', 'type': {'key': '/type/delete'}})
         assert len(requests) == 1
         assert isinstance(requests[0], update_work.DeleteRequest)
-        assert requests[0].toxml() == '<delete><query>key:/works/OL23M</query></delete>'
+        assert requests[0].toxml() == b'<delete><query>key:/works/OL23M</query></delete>'
 
     def test_redirects(self):
         requests = update_work.update_work({'key': '/works/OL23W', 'type': {'key': '/type/redirect'}})
         assert len(requests) == 1
         assert isinstance(requests[0], update_work.DeleteRequest)
-        assert requests[0].toxml() == '<delete><query>key:/works/OL23W</query></delete>'
+        assert requests[0].toxml() == b'<delete><query>key:/works/OL23W</query></delete>'
