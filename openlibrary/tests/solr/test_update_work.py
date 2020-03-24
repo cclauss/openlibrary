@@ -398,7 +398,7 @@ class Test_update_items():
         assert isinstance(del_req, update_work.DeleteRequest)
         assert del_req.toxml().startswith(b"<delete>")
         for olid in olids:
-            assert b"<query>key:%s</query>" % olid in del_req.toxml()
+            assert ("<query>key:%s</query>" % olid).encode("utf-8") in del_req.toxml()
 
 
 class TestUpdateWork:
