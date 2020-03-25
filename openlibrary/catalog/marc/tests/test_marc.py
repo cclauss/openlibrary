@@ -18,13 +18,13 @@ class MockField:
         return contents
 
     def get_all_subfields(self):
-        return self.get_subfields(self.contents.keys())
+        return self.get_subfields(self.contents)
 
     def get_subfields(self, want):
         for w in want:
-           if w in self.contents:
-               for i in self.contents.get(w):
-                   yield w, i
+            if w in self.contents:
+                for i in self.contents.get(w):
+                    yield w, i
 
     def get_subfield_values(self, want):
         return [v for k, v in self.get_subfields(want)]
@@ -120,8 +120,7 @@ class TestMarcParse(unittest.TestCase):
                 #'West Indies, British -- Relations -- Great Britain.')
         ]
         for (value, expect) in data:
-            output = subjects_for_work(MockRecord('650', value))
-            self.assertEqual(expect, output)
+            assert expect == subjects_for_work(MockRecord('650', value))
 
     def test_read_title(self):
         data = [
