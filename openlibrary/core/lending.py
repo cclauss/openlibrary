@@ -242,6 +242,7 @@ def get_availability(key, ids):
         content = urllib.request.urlopen(url=url, timeout=config_http_request_timeout).read()
         return simplejson.loads(content.decode('utf-8')).get('responses', {})
     except ValueError as e:
+        assert False, "{}, {}, ({}) {}".format(e, url, type(content), content)
         return {'error': 'request_timeout', 'details': str(e)}
 
 def get_edition_availability(ol_edition_id):
