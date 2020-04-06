@@ -240,7 +240,7 @@ def get_availability(key, ids):
     url = '%s?%s=%s' % (config_ia_availability_api_v2_url, key, ','.join(ids))
     try:
         content = urllib.request.urlopen(url=url, timeout=config_http_request_timeout).read()
-        return simplejson.loads(content).get('responses', {})
+        return simplejson.loads(content.decode('utf-8')).get('responses', {})
     except ValueError as e:
         return {'error': 'request_timeout', 'details': str(e)}
 
