@@ -194,7 +194,7 @@ def get_random_available_ia_edition():
         content = urllib.request.urlopen(url=url, timeout=config_http_request_timeout).read()
         items = simplejson.loads(content).get('response', {}).get('docs', [])
         return items[0]["openlibrary_edition"]
-    except ImportError as e:
+    except Exception as e:
         return None
 
 def get_available(limit=None, page=1, subject=None, query=None,
@@ -227,7 +227,7 @@ def get_available(limit=None, page=1, subject=None, query=None,
                 results[item['openlibrary_work']] = item['openlibrary_edition']
         books = web.ctx.site.get_many(['/books/%s' % result for result in results.values()])
         return books
-    except ValueError:
+    except Exception as e:
         return {'error': 'request_timeout'}
 
 
@@ -343,7 +343,7 @@ def is_loaned_out_on_ia(identifier):
     try:
         response = simplejson.loads(urllib.request.urlopen(url).read())
         return response and response.get('checkedout')
-    except ImportError:
+    except:
         return None
 
 
@@ -375,12 +375,12 @@ def get_loan(identifier, user_key=None):
             return loan.delete()
     try:
         _loan = _get_ia_loan(identifier, account and userkey2userid(account.username))
-    except ImportError as e:
+    except Exception as e:
         pass
 
     try:
         _loan = _get_ia_loan(identifier, account and account.itemname)
-    except ImportError as e:
+    except Exception as e:
         pass
 
     return _loan
@@ -473,7 +473,7 @@ def sync_loan(identifier, loan=NOT_INITIALIZED):
     }
     try:
         ebook.update(**kwargs)
-    except ImportError:
+    except Exception:
         # updating ebook document is sometimes failing with
         # "Document update conflict" error.
         # Log the error in such cases, don't crash.
@@ -806,7 +806,7 @@ class IA_Lending_API:
             logger.info("POST response: %s", jsontext)
             return simplejson.loads(jsontext)
         except Exception as e:
-            logger.exception("POST failed! " + str(e))
+            logger.exception("POST failed")
             raise
 
 ia_lending_api = IA_Lending_API()
