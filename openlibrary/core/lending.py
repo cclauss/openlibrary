@@ -227,7 +227,7 @@ def get_available(limit=None, page=1, subject=None, query=None,
                 results[item['openlibrary_work']] = item['openlibrary_edition']
         books = web.ctx.site.get_many(['/books/%s' % result for result in results.values()])
         return books
-    except ImportError as e:
+    except ValueError:
         return {'error': 'request_timeout'}
 
 
