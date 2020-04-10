@@ -15,7 +15,7 @@ def return_test_marc_xml(url):
 def return_test_marc_data(url, test_data_subdir="xml_input"):
     filename = url.split("/")[-1]
     test_data_dir = "/../../catalog/marc/tests/test_data/%s/" % test_data_subdir
-    path = os.path.dirname(__file__) + test_data_dir + filename
+    path = (os.path.dirname(__file__) + test_data_dir + filename).encode("utf-8")
     return open(path)
 
 class TestGetIA():
