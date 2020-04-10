@@ -3,6 +3,7 @@ from openlibrary.catalog.marc.marc_binary import MarcBinary
 from openlibrary.catalog.marc.get_subjects import (
     four_types, read_subjects)
 from collections import defaultdict
+from io import open
 from lxml import etree
 import os
 import pytest
@@ -115,7 +116,7 @@ class TestSubjects:
     def test_subjects_bin(self, item, expected):
         filename = os.path.dirname(__file__) + '/test_data/bin_input/' + item
 
-        data = open(filename, 'rb').read()
+        data = open(filename, encoding='tuf-8').read()
         if len(data) != int(data[:5]):
             if isinstance(data, bytes):
                 data = data.decode('utf-8')
