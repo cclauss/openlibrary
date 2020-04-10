@@ -115,7 +115,7 @@ class TestSubjects:
     def test_subjects_bin(self, item, expected):
         filename = os.path.dirname(__file__) + '/test_data/bin_input/' + item
 
-        data = open(filename).read()
+        data = open(filename, 'rb').read()
         if len(data) != int(data[:5]):
             if isinstance(data, bytes):
                 data = data.decode('utf-8')
