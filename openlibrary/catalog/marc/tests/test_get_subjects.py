@@ -115,9 +115,11 @@ class TestSubjects:
     def test_subjects_bin(self, item, expected):
         filename = os.path.dirname(__file__) + '/test_data/bin_input/' + item
 
-        data = open(filename, 'rb').read()
+        data = open(filename).read()
         if len(data) != int(data[:5]):
-            data = data.decode('utf-8').encode('raw_unicode_escape')
+            if isinstance(data, bytes):
+                data = data.decode('utf-8')
+            data = data.encode('raw_unicode_escape')
         rec = MarcBinary(data)
         assert read_subjects(rec) == expected
 
