@@ -78,4 +78,4 @@ endif
 
 test:
 	npm test
-	pytest
+	pytest .
