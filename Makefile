@@ -80,6 +80,8 @@ test:
 	npm test
 	mv vendor/infogami/infogami/conftest.py vendor/infogami/infogami/was_conftest.py
 	mv infogami/infobase/tests/conftest.py infogami/infobase/tests/was_conftest.py
+	mv openlibrary/records/tests/conftest.py openlibrary/records/tests/was_conftest.py
 	pytest .
 	mv vendor/infogami/infogami/was_conftest.py vendor/infogami/infogami/conftest.py
 	mv infogami/infobase/tests/was_conftest.py infogami/infobase/tests/conftest.py
+	mv openlibrary/records/tests/was_conftest.py openlibrary/records/tests/conftest.py
