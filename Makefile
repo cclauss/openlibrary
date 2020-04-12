@@ -78,4 +78,6 @@ endif
 
 test:
 	npm test
-	pytest . --ignore=vendor
+	mv vendor/infogami/infogami/conftest.py vendor/infogami/infogami/was_conftest.py
+	pytest .
+	mv vendor/infogami/infogami/was_conftest.py vendor/infogami/infogami/conftest.py
