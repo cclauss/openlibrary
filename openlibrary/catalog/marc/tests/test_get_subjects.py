@@ -117,7 +117,9 @@ class TestSubjects:
 
         data = open(filename, 'rb').read()
         if len(data) != int(data[:5]):
-            data = data.decode('raw_unicode_escape')  # .encode('raw_unicode_escape')
+            data = data.decode('utf-8').encode('raw_unicode_escape').decode(
+                'raw_unicode_escape'
+            )
         rec = MarcBinary(data)  # MarcBinary takes six.StringTypes but we pass in bytes
         assert read_subjects(rec) == expected
 
