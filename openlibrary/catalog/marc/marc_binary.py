@@ -106,10 +106,10 @@ class BinaryDataField():
 class MarcBinary(MarcBase):
     def __init__(self, data):
         try:
-            assert len(data) and isinstance(data, six.string_types)
+            assert len(data) and isinstance(data, bytes)
             length = int(data[:5])
-        except:
-            raise BadMARC("No MARC data found")
+        except Exception as e:
+            raise BadMARC("No MARC data found: " + str(e))
         if len(data) != length:
             raise BadLength("Record length %s does not match reported length %s." % (len(data), length))
         self.data = data
