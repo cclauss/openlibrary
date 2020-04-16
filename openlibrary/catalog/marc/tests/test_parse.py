@@ -7,7 +7,6 @@ from openlibrary.catalog.marc.marc_xml import DataField, MarcXml
 from lxml import etree
 import os
 import simplejson
-from six.moves.collections_abc import Iterable
 
 collection_tag = '{http://www.loc.gov/MARC21/slim}collection'
 record_tag = '{http://www.loc.gov/MARC21/slim}record'
@@ -99,10 +98,11 @@ class TestParseMARCBinary:
             expect_filename
         )
         for key, value in edition_marc_bin.items():
-            if isinstance(value, Iterable):  # can not sort a list of dicts
+            if isinstance(value, list):  # can not sort a list of dicts
                 assert len(value) == len(j[key]), msg
                 for item in value:  # zweibchersatir01horauoft_meta.mrc
-                    assert not isinstance(item, Iterable), (type(item), item)
+                    assert not isinstance(item, list), (type(item), item)
+                    assert item in j[key]
                 assert all(item in value for item in j[key]), msg
             else:
                 assert value == j[key], msg
