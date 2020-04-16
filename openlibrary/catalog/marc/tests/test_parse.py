@@ -101,6 +101,8 @@ class TestParseMARCBinary:
         for key, value in edition_marc_bin.items():
             if isinstance(value, Iterable):  # can not sort a list of dicts
                 assert len(value) == len(j[key]), msg
+                for item in value:  # zweibchersatir01horauoft_meta.mrc
+                    assert not isinstance(item, Iterable), (type(item), item)
                 assert all(item in value for item in j[key]), msg
             else:
                 assert value == j[key], msg
