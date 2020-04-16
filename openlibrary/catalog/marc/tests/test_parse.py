@@ -63,7 +63,7 @@ class TestParseMARCXML:
             expect_filename
         )
         for key, value in edition_marc_xml.items():
-            if isinstance(value, Iterable):  # can not sort a list of dicts
+            if isinstance(value, list):  # can not sort a list of dicts
                 assert len(value) == len(j[key]), msg
                 assert all(item in value for item in j[key]), msg
             else:
