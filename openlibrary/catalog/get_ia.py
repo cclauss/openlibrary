@@ -43,6 +43,7 @@ def urlopen_keep_trying(url):
             logger.exception("urlopen_keep_trying(%s) %s" % (url, i))
             pass
         sleep(2)
+    raise
 
 
 @deprecated
@@ -75,6 +76,8 @@ def get_marc_record_from_ia(identifier):
     # Try marc.xml first
     if marc_xml_filename in filenames:
         data = urlopen_keep_trying(item_base + marc_xml_filename).read()
+        if bytes != str and isinstance(data, str):
+            data.decode("utf-8")
         logger.error("Not error: type(data) is %s" % type(data))  # CCC
         try:
             root = etree.fromstring(data)
