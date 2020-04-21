@@ -1,10 +1,14 @@
 from __future__ import print_function
+import logging
 import os
 import pytest
 from openlibrary.catalog import get_ia
 from openlibrary.core import ia
 from openlibrary.catalog.marc.marc_xml import MarcXml
 from openlibrary.catalog.marc.marc_binary import MarcBinary, BadLength, BadMARC
+
+logger = logging.getLogger(__name__)
+
 
 def return_test_marc_bin(url):
     return return_test_marc_data(url, "bin_input")
@@ -16,6 +20,7 @@ def return_test_marc_data(url, test_data_subdir="xml_input"):
     filename = url.split("/")[-1]
     test_data_dir = "/../../catalog/marc/tests/test_data/%s/" % test_data_subdir
     path = os.path.dirname(__file__) + test_data_dir + filename
+    logger.error("Not error: path %s exists %s" % (path, os.path.exists(path)))
     return open(path)
 
 class TestGetIA():
