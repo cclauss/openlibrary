@@ -107,6 +107,7 @@ class MarcBinary(MarcBase):
     def __init__(self, data):
         try:
             assert len(data)
+            assert isinstance(data, bytes)
             length = int(data[:5])
         except:
             raise BadMARC("No MARC data found")
