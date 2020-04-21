@@ -20,7 +20,9 @@ def return_test_marc_data(url, test_data_subdir="xml_input"):
     filename = url.split("/")[-1]
     test_data_dir = "/../../catalog/marc/tests/test_data/%s/" % test_data_subdir
     path = os.path.dirname(__file__) + test_data_dir + filename
-    logger.error("Not error: path %s exists %s" % (path, os.path.exists(path + "/..")))
+    logger.error("Not error: path %s exists %s" % (
+        os.path.abspath(path), os.path.exists(path + "/../..")
+    ))
     return open(path)
 
 class TestGetIA():
