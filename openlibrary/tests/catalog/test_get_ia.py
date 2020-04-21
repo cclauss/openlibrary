@@ -23,6 +23,7 @@ def return_test_marc_data(url, test_data_subdir="xml_input"):
     abspath = os.path.abspath(path)
     while "/" in abspath:
         print(abspath, os.path.exists(abspath))
+        abspath = abspath.rpartition("/")[0]
 
     #logger.error("Not error: path %s exists %s" % (
     #    os.path.abspath(path), os.path.exists(path + "/../..")
