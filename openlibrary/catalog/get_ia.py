@@ -75,11 +75,12 @@ def get_marc_record_from_ia(identifier):
     # Try marc.xml first
     if marc_xml_filename in filenames:
         data = urlopen_keep_trying(item_base + marc_xml_filename).read()
+        logger.error("Not error: type(data) is %s" % type(data))  # CCC
         try:
             root = etree.fromstring(data)
             return MarcXml(root)
         except Exception as e:
-            logger.exception("get_marc_record_from_ia(%s)" % identifier)
+            logger.exception("get_marc_record_from_ia(%s) %s" % (identifier, type(data)))  # CCC
             print("Unable to read MarcXML: %s" % e)
             traceback.print_exc()
 
