@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import logging
 import os.path
 import socket
 import traceback
@@ -17,6 +18,7 @@ from openlibrary.catalog.marc.parse import read_edition
 from openlibrary.catalog.marc.fast_parse import read_file as fast_read_file  # Deprecated import
 from openlibrary.core import ia
 
+logger = logging.getLogger(__name__)
 
 IA_BASE_URL = config.get('ia_base_url')
 IA_DOWNLOAD_URL = '%s/download/' % IA_BASE_URL
@@ -35,8 +37,10 @@ def urlopen_keep_trying(url):
             return f
         except urllib.error.HTTPError as error:
             if error.code in (403, 404, 416):
+                logger.exception("urlopen_keep_trying(%s)" % url)
                 raise
         except urllib.error.URLError:
+            logger.exception("urlopen_keep_trying(%s) %s" % (url, i))
             pass
         sleep(2)
 
@@ -75,6 +79,7 @@ def get_marc_record_from_ia(identifier):
             root = etree.fromstring(data)
             return MarcXml(root)
         except Exception as e:
+            logger.exception("get_marc_record_from_ia(%s)" % identifier)
             print("Unable to read MarcXML: %s" % e)
             traceback.print_exc()
 
@@ -105,13 +110,16 @@ def files(identifier):
     try:
         tree = etree.parse(urlopen_keep_trying(url))
     except:
+        logger.exception("files(%s)" % identifier)
         print("error reading", url)
         raise
     assert tree
     for i in tree.getroot():
         assert i.tag == 'file'
         name = i.attrib['name']
-        if name == 'wfm_bk_marc' or name.endswith('.mrc') or name.endswith('.marc') or name.endswith('.out') or name.endswith('.dat') or name.endswith('.records.utf8'):
+        if name == 'wfm_bk_marc' or name.endswith(
+            ('.mrc', '.marc', '.out', '.dat', '.records.utf8')
+        ):
             size = i.find('size')
             if size is not None:
                 yield name, int(size.text)
@@ -145,7 +153,7 @@ def get_from_archive_bulk(locator):
     """
     if locator.startswith('marc:'):
         locator = locator[5:]
-    filename, offset, length = locator.split (":")
+    filename, offset, length = locator.split(":")
     offset = int(offset)
     length = int(length)
 
@@ -163,7 +171,9 @@ def get_from_archive_bulk(locator):
         data = f.read(MAX_MARC_LENGTH)
         len_in_rec = int(data[:5])
         if len_in_rec != length:
-            data, next_offset, next_length = get_from_archive_bulk('%s:%d:%d' % (filename, offset, len_in_rec))
+            data, next_offset, next_length = get_from_archive_bulk(
+                '%s:%d:%d' % (filename, offset, len_in_rec)
+            )
         else:
             next_length = data[length:]
             data = data[:length]
@@ -212,7 +222,7 @@ def marc_formats(identifier, host=None, path=None):
         identifier + '_marc.xml': 'xml',
         identifier + '_meta.mrc': 'bin',
     }
-    has = { 'xml': False, 'bin': False }
+    has = {'xml': False, 'bin': False}
     url = item_file_url(identifier, 'files.xml', host, path)
     for attempt in range(10):
         f = urlopen_keep_trying(url)
@@ -220,13 +230,14 @@ def marc_formats(identifier, host=None, path=None):
             break
         sleep(10)
     if f is None:
-        #TODO: log this, if anything uses this code
         msg = "error reading %s_files.xml" % identifier
+        logger.error(msg)
         return has
     data = f.read()
     try:
         root = etree.fromstring(data)
     except:
+        logger.exception("marc_formats(%s) bad: %s" % (identifier, repr(data)))
         print(('bad:', repr(data)))
         return has
     for e in root:
