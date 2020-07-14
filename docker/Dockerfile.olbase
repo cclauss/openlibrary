@@ -10,6 +10,7 @@ RUN groupadd --system openlibrary \
   && useradd --no-log-init --system --gid openlibrary --create-home openlibrary \
   && useradd --no-log-init --system --gid openlibrary solrupdater
 
+# Misc OL dependencies
 RUN apt-get -qq update && apt-get install -y \
     nginx \
     authbind \
@@ -21,10 +22,22 @@ RUN apt-get -qq update && apt-get install -y \
     libxslt-dev \
     libffi-dev \
     curl \
-    screen \
-    python-dev \
-    python-pip \
-    libgeoip-dev
+    screen
+
+# Install pyenv
+# Python build deps: https://github.com/pyenv/pyenv/wiki/Common-build-problems#prerequisites
+RUN apt-get -qq update && apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev \
+    libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
+    xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
+# Install latest pyenv (https://github.com/pyenv/pyenv-installer)
+RUN curl https://pyenv.run | bash && \
+    echo -e '\nexport PATH="/root/.pyenv/bin:$PATH"\neval "$(pyenv init -)"\neval "$(pyenv virtualenv-init -)"' >> ~/.bashrc && \
+    exec $SHELL
+RUN pyenv install --list
+RUN pyenv install 2.7.16
+RUN pyenv install 3.8.3
+
+RUN pyenv global 2.7.16 3.8.3
 
 # Update pip to match production (Jan 2020)
 RUN pip install --upgrade --disable-pip-version-check pip==19.3.1
@@ -47,7 +60,8 @@ RUN mkdir /openlibrary && chown openlibrary:openlibrary /openlibrary
 WORKDIR /openlibrary
 
 COPY requirements*.txt ./
-RUN pip install --disable-pip-version-check --default-timeout=100 -r requirements_common.txt
+RUN python2 -m pip install --disable-pip-version-check --default-timeout=100 -r requirements_common.txt
+RUN python3 -m pip install --default-timeout=100 -r requirements_common.txt
 
 USER openlibrary
 COPY package*.json ./
