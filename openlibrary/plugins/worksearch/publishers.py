@@ -20,7 +20,7 @@ class publishers(subjects.subjects):
     def GET(self, key):
         key = key.replace("_", " ")
         page = subjects.get_subject(key, details=True)
-
+        assert page, "subjects: {}, key: {}".format(subjects, keys)
         if page.work_count == 0:
             web.ctx.status = "404 Not Found"
             return render_template('publishers/notfound.tmpl', key)

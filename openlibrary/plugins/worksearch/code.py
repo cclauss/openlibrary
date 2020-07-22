@@ -309,8 +309,9 @@ def parse_json(raw_file):
         return None
     return json_result
 
-def run_solr_query(param = {}, rows=100, page=1, sort=None, spellcheck_count=None, offset=None, fields=None):
+def run_solr_query(param = None, rows=100, page=1, sort=None, spellcheck_count=None, offset=None, fields=None):
     # called by do_search
+    param = param or {}
     if spellcheck_count == None:
         spellcheck_count = default_spellcheck_count
 
@@ -393,7 +394,7 @@ def do_search(param, sort, page=1, rows=100, spellcheck_count=None):
     (reply, solr_select, q_list) = run_solr_query(
         param, rows, page, sort, spellcheck_count)
     is_bad = False
-    if not reply or reply.startswith('<html'):
+    if not reply or reply.startswith(b'<html'):
         is_bad = True
     if not is_bad:
         try:
@@ -434,7 +435,7 @@ def do_search(param, sort, page=1, rows=100, spellcheck_count=None):
         spellcheck = spell_map,
     )
 
-def get_doc(doc): # called from work_search template
+def get_doc(doc):  # called from work_search template
     e_ia = doc.find("arr[@name='ia']")
     first_pub = None
     e_first_pub = doc.find("int[@name='first_publish_year']")
