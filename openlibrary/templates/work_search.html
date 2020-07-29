@@ -19,9 +19,8 @@ $for p in ['q', 'title', 'author', 'page', 'sort', 'isbn', 'oclc', 'contributor'
     $if p in input and input[p]:
         $ param[p] = input[p]
 
-$if param.keys() == ['has_fulltext']:
+$if list(param) == ['has_fulltext']:
     $ param = {}
-
 $ sorts = dict(editions='edition_count desc', old='first_publish_year asc', new='first_publish_year desc', scans='ia_count desc')
 
 $ error = None
@@ -38,7 +37,6 @@ $if param:
     $ error = results.error
 $else:
     $ num_found = 0
-
 
 $ start_facet_count = 5
 $ facet_inc = 10
@@ -196,7 +194,6 @@ $ )
 
 
 <!-- results -->
-
     $if param and not docs:
         $ query = query_param('q')
         $ page = int(query_param('page') or 1)
