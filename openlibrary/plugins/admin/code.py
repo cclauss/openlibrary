@@ -114,6 +114,7 @@ class reload:
                 response = urllib.request.urlopen(s).read()
                 yield "<p><pre>" + response[:100] + "</pre></p>"
             except:
+                traceback.print_exc()
                 yield "<p><pre>%s</pre></p>" % traceback.format_exc()
 
 @web.memoize

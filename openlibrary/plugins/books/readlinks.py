@@ -5,6 +5,7 @@ editions of the same work that might be available.
 from __future__ import print_function
 import sys
 import re
+import traceback
 
 from six.moves import urllib
 import web
@@ -403,6 +404,7 @@ def readlinks(req, options):
             s['summary'] = summary
             s['stats'] = web.ctx.get('stats', [])
     except:
+        traceback.print_exc()
         print('Error in processing Read API', file=sys.stderr)
         if options.get('show_exception'):
             register_exception()

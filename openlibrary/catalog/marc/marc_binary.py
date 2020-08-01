@@ -1,9 +1,10 @@
+import traceback
+
 from pymarc import MARC8ToUnicode
 from unicodedata import normalize
 
 from openlibrary.catalog.marc import mnemonics
 from openlibrary.catalog.marc.marc_base import MarcBase, MarcException, BadMARC, re_isbn
-
 
 import six
 
@@ -57,6 +58,7 @@ class BinaryDataField():
             try:
                 data = data.decode('utf-8')
             except:
+                traceback.print_exc()
                 utf8 = False
         if not utf8:
             data = mnemonics.read(data)
@@ -109,6 +111,7 @@ class MarcBinary(MarcBase):
             assert len(data) and isinstance(data, six.string_types)
             length = int(data[:5])
         except:
+            traceback.print_exc()
             raise BadMARC("No MARC data found")
         if len(data) != length:
             raise BadLength("Record length %s does not match reported length %s." % (len(data), length))

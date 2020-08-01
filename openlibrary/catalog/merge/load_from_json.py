@@ -5,6 +5,7 @@ import simplejson
 import re
 from normalize import normalize
 from time import time
+import traceback
 
 re_escape = re.compile(r'[\n\r\t\0\\]')
 trans = { '\n': '\\n', '\r': '\\r', '\t': '\\t', '\\': '\\\\', '\0': '', }
@@ -99,6 +100,7 @@ for line in open(filename):
         rec = simplejson.loads(json_data)
         load_record(rec, files)
     except:
+        traceback.print_exc()
         print('record number:', rec_no)
         print(line)
         raise

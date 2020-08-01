@@ -10,6 +10,7 @@ import re
 from six.moves.urllib.request import urlopen
 import sys
 from time import time, sleep
+import traceback
 from openlibrary.catalog.works.find_works import find_title_redirects, find_works, get_books, books_query, update_works
 
 from six.moves.urllib.error import URLError
@@ -45,6 +46,7 @@ def run_work_finder(i):
     try:
         assert len(changeset['data']) == 2 and 'master' in changeset['data'] and 'duplicates' in changeset['data']
     except:
+        traceback.print_exc()
         print(d['changeset'])
         raise
     akey = changeset['data']['master']
@@ -80,6 +82,7 @@ while True:
     try:
         ret = simplejson.loads(data)
     except:
+        traceback.print_exc()
         open('bad_data.json', 'w').write(data)
         raise
 
@@ -103,6 +106,7 @@ while True:
         try:
             run_work_finder(i)
         except:
+            traceback.print_exc()
             print(offset)
             raise
 

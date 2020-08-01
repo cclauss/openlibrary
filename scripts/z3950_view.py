@@ -3,6 +3,7 @@ from PyZ3950 import zoom
 from lxml import etree
 import sys
 import re
+import traceback
 from openlibrary.catalog.marc.html import html_record
 from openlibrary.catalog.marc import xml_to_html
 
@@ -103,12 +104,14 @@ class z3950_lookup:
         try:
             from_marc_xml = xml_to_html.html_record(urlopen(marc_xml).read())
         except:
+            traceback.print_exc()
             from_marc_xml = None
 
         try:
             meta_mrc = urlopen(marc_bin).read()
             from_marc_bin = html_record(meta_mrc)
         except:
+            traceback.print_exc()
             from_marc_bin = None
 
         root = etree.parse(urlopen(marc_source)).getroot()

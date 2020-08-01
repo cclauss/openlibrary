@@ -4,6 +4,7 @@ import MySQLdb
 import datetime
 import re
 import sys
+import traceback
 sys.path.append('/1/src/openlibrary')
 from openlibrary.api import OpenLibrary, Reference
 from flask import Flask, render_template, request, flash, redirect, url_for, g
@@ -85,6 +86,7 @@ def run_merge(ia):
     try:
         ol.save_many(updates, 'merge lending editions')
     except:
+        traceback.print_exc()
         #for i in updates:
         #    print i
         raise

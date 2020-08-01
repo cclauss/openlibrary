@@ -3,6 +3,7 @@ from infogami.utils.view import render, safeint
 from openlibrary.plugins.admin import memory
 import web
 import gc
+import traceback
 
 import six
 
@@ -29,6 +30,7 @@ class Object:
             else:
                 return repr(self.obj)
         except:
+            traceback.print_exc()
             return "failed"
 
         return render_template("admin/memory/object", self.obj)

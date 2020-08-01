@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 import re
 import os
+import traceback
 from openlibrary.catalog.parse import read_edition
 from lxml.html import fromstring
 import openlibrary.catalog.importer.pool as pool
@@ -62,6 +63,7 @@ def read_amazon_file(f):
         try:
             edition = read_edition(fromstring(page))
         except:
+            traceback.print_exc()
             print('bad record:', asin)
             raise
         if not edition:
@@ -189,6 +191,7 @@ def import_file(filename):
                 try:
                     m = try_merge(edition, ekey, thing)
                 except:
+                    traceback.print_exc()
                     print(asin)
                     print(edition)
                     print(ekey)

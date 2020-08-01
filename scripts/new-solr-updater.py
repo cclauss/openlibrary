@@ -19,6 +19,7 @@ import web
 import sys
 import re
 import socket
+import traceback
 
 from openlibrary.solr import update_work
 from openlibrary.config import load_config
@@ -88,6 +89,7 @@ class InfobaseLog:
             try:
                 d = json.loads(jsontext)
             except:
+                traceback.print_exc()
                 logger.error("Bad JSON: %s", jsontext)
                 raise
             data = d['data']

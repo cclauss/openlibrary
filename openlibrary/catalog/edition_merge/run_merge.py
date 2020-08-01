@@ -3,6 +3,7 @@ import MySQLdb
 import datetime
 import re
 import sys
+import traceback
 from openlibrary.api import OpenLibrary, Reference
 from collections import defaultdict
 
@@ -179,6 +180,7 @@ for ia, ekeys, done in cur.fetchall():
     try:
         print(ol.save_many(updates, 'merge lending editions'))
     except:
+        traceback.print_exc()
         for i in updates:
             print(i)
         raise

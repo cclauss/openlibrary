@@ -3,6 +3,7 @@ from lxml.html import parse, tostring
 import re
 import os
 import sys
+import traceback
 import web
 from warnings import warn
 from math import floor
@@ -76,7 +77,7 @@ def read_authors(by_span):
         raise MissingAuthor
     try:
         assert by_span.text in ('\n\n', '\n\n~ ')
-    except:
+    except AssertionError:
         print(repr(by_span.text))
         raise
     expect_end = False
@@ -275,6 +276,7 @@ def find_product_details_ul(doc):
     try:
         assert a.tag == 'a' and a.attrib['name'] == 'productDetails'
     except:
+        traceback.print_exc()
         print(tostring(a))
         raise
     hr = a.getnext()

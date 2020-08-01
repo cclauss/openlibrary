@@ -3,6 +3,7 @@
 import copy
 import datetime
 import time
+import traceback
 import hmac
 import re
 import simplejson
@@ -877,6 +878,7 @@ def ia_token_is_current(item_id, access_token):
     try:
         token_timestamp = access_token.split('-')[0]
     except:
+        traceback.print_exc()
         return False
 
     token_time = int(token_timestamp)
@@ -888,6 +890,7 @@ def ia_token_is_current(item_id, access_token):
     try:
         token_hmac = access_token.split('-')[1]
     except:
+        traceback.print_exc()
         return False
 
     expected_data = '%s-%s' % (item_id, token_timestamp)

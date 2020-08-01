@@ -105,6 +105,7 @@ def files(identifier):
     try:
         tree = etree.parse(urlopen_keep_trying(url))
     except:
+        traceback.print_exc()
         print("error reading", url)
         raise
     assert tree
@@ -227,6 +228,7 @@ def marc_formats(identifier, host=None, path=None):
     try:
         root = etree.fromstring(data)
     except:
+        traceback.print_exc()
         print(('bad:', repr(data)))
         return has
     for e in root:

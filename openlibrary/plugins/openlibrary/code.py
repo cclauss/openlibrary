@@ -13,6 +13,7 @@ import random
 import datetime
 import logging
 from time import time
+import traceback
 
 import infogami
 
@@ -41,7 +42,7 @@ delegate.app.add_processor(processors.CORSProcessor())
 
 try:
     from infogami.plugins.api import code as api
-except:
+except ImportError:
     api = None
 
 # http header extension for OL API
@@ -453,6 +454,7 @@ class rdf(delegate.mode):
             try:
                 result = template.typetemplate('rdf')(page)
             except:
+                traceback.print_exc()
                 raise web.notfound('')
             else:
                 return delegate.RawText(result, content_type='application/rdf+xml; charset=utf-8')
@@ -473,6 +475,7 @@ class opds(delegate.mode):
             try:
                 result = template.typetemplate('opds')(page, opds)
             except:
+                traceback.print_exc()
                 raise web.notfound('')
             else:
                 return delegate.RawText(result, content_type=' application/atom+xml;profile=opds')
@@ -492,6 +495,7 @@ class marcxml(delegate.mode):
             try:
                 result = template.typetemplate('marcxml')(page)
             except:
+                traceback.print_exc()
                 raise web.notfound('')
             else:
                 return delegate.RawText(result, content_type='application/marcxml+xml; charset=utf-8')
@@ -738,6 +742,7 @@ def wget(url):
     try:
         return urllib.request.urlopen(url).read()
     except:
+        traceback.print_exc()
         return ''
 
 

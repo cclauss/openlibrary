@@ -3,6 +3,7 @@ import web
 import simplejson as json
 from time import sleep
 import sys
+import traceback
 
 from six.moves import urllib
 
@@ -39,6 +40,7 @@ def has_cover_retry(key):
         except KeyboardInterrupt:
             raise
         except:
+            traceback.print_exc()
             pass
         sleep(2)
 
@@ -86,6 +88,7 @@ def query(q):
                     assert 'error' not in data
                 return data
             except:
+                traceback.print_exc()
                 print(ret)
                 print(url)
         sleep(20)
@@ -133,6 +136,7 @@ def withKey(key):
         try:
             return jsonload(url)
         except:
+            traceback.print_exc()
             pass
         print('retry:', i)
         print(url)

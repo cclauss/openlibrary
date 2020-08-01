@@ -2,6 +2,7 @@ from __future__ import print_function
 import re
 import web
 import json
+import traceback
 from openlibrary.catalog.importer.db_read import get_mc
 from openlibrary.api import unmarshal
 from time import sleep
@@ -20,6 +21,7 @@ def query_with_retry(ol, q):
         try:
             return ol.query(q)
         except:
+            traceback.print_exc()
             sleep(5)
             print('retry attempt', attempt)
 
@@ -28,6 +30,7 @@ def get_with_retry(ol, k):
         try:
             return ol.get(k)
         except:
+            traceback.print_exc()
             sleep(5)
             print('retry attempt', attempt)
 

@@ -5,6 +5,7 @@
 import web
 import copy
 import re
+import traceback
 
 from infogami.utils.view import render
 
@@ -174,6 +175,7 @@ class Validator:
         try:
             return self.test(value)
         except:
+            traceback.print_exc()
             raise
             return False
 

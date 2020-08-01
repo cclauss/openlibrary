@@ -5,6 +5,7 @@ import sys
 import os
 import socket
 from time import sleep
+import traceback
 from os.path import exists
 from datetime import date, timedelta, datetime
 import codecs
@@ -267,6 +268,7 @@ def write_books(books):
                     print('http://amazon.com/dp/' + asin)
                     sys.exit(0)
             except:
+                traceback.print_exc()
                 pass
             print('retry')
             sleep(5)

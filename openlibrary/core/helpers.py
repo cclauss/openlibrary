@@ -4,6 +4,7 @@ import web
 from datetime import datetime
 import simplejson
 import re
+import traceback
 
 from six.moves.urllib.parse import urlsplit
 
@@ -83,6 +84,7 @@ def sanitize(html, encoding='utf8'):
             try:
                 html = genshi.HTML(html)
             except Exception:
+                traceback.print_exc()
                 # Failed to sanitize.
                 # We can't do any better than returning the original HTML, without sanitizing.
                 return html
@@ -175,6 +177,7 @@ def commify(number, lang=None):
         lang = lang or web.ctx.get("lang") or "en"
         return babel.numbers.format_number(int(number), lang)
     except:
+        traceback.print_exc()
         return six.text_type(number)
 
 

@@ -28,6 +28,7 @@ import os
 import datetime
 import sys
 import time
+import traceback
 
 __all__ = [
     "setup_database", "setup_memcache",
@@ -174,6 +175,7 @@ def update_docs(docs, comment, author, ip="127.0.0.1"):
         debug("UPDATE thing")
         db.query("UPDATE thing set latest_revision=latest_revision+1 WHERE id IN $thing_ids", vars=locals())
     except:
+        traceback.print_exc()
         t.rollback()
         debug("ROLLBACK")
         raise

@@ -1,3 +1,5 @@
+import traceback
+
 from openlibrary.utils.dateutil import DATE_ONE_MONTH_AGO, DATE_ONE_WEEK_AGO
 
 from . import db
@@ -190,6 +192,7 @@ class Bookshelves(object):
             return oldb.delete('bookshelves_books',
                                where=('work_id=$work_id AND username=$username'), vars=where)
         except:  # we want to catch no entry exists
+            traceback.print_exc()
             return None
 
     @classmethod
@@ -201,6 +204,7 @@ class Bookshelves(object):
             result = oldb.query(query, vars={'work_id': int(work_id)})
             return result if lazy else list(result)
         except:
+            traceback.print_exc()
             return None
 
     @classmethod

@@ -7,6 +7,7 @@ import time
 import logging
 import array
 import memcache
+import traceback
 
 from six.moves.urllib.request import urlopen
 
@@ -96,6 +97,7 @@ class upload:
             try:
                 data = download(i.source_url)
             except:
+                traceback.print_exc()
                 error(ERROR_INVALID_URL)
             source_url = i.source_url
         elif i.file is not None and i.file != {}:
@@ -138,6 +140,7 @@ class upload2:
             try:
                 data = download(source_url)
             except:
+                traceback.print_exc()
                 error(ERROR_INVALID_URL)
 
         if not data:

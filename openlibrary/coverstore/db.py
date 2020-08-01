@@ -1,4 +1,5 @@
 import datetime
+import traceback
 
 import web
 
@@ -38,6 +39,7 @@ def new(category, olid, filename, filename_s, filename_m, filename_l,
 
         db.insert("log", action="new", timestamp=now, cover_id=cover_id)
     except:
+        traceback.print_exc()
         t.rollback()
         raise
     else:
@@ -82,6 +84,7 @@ def touch(id):
         db.query("UPDATE cover SET last_modified=$now where id=$id", vars=locals())
         db.insert("log", action="touch", timestamp=now, cover_id=id)
     except:
+        traceback.print_exc()
         t.rollback()
         raise
     else:
@@ -97,6 +100,7 @@ def delete(id):
         db.query('UPDATE cover set deleted=$true AND last_modified=$now WHERE id=$id', vars=locals())
         db.insert("log", action="delete", timestamp=now, cover_id=id)
     except:
+        traceback.print_exc()
         t.rollback()
         raise
     else:

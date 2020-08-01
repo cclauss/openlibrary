@@ -3,6 +3,7 @@ import MySQLdb
 import datetime
 import re
 import sys
+import traceback
 from openlibrary.catalog.utils import cmp
 sys.path.append('/1/src/openlibrary')
 from openlibrary.api import OpenLibrary, Reference
@@ -117,6 +118,7 @@ for ia, ekeys, done, unmerge_count in cur.fetchall():
         if not all(author0 == e['authors'][0] for e in editions[1:]):
             continue
     except:
+        traceback.print_exc()
         print('editions:', [e['key'] for e in editions])
         raise
     if all(work0 == e['works'][0] for e in editions[1:]):

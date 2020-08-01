@@ -3,6 +3,7 @@ import re
 import simplejson as json
 import sys
 from time import time
+import traceback
 import web
 
 re_author_key = re.compile('^/a/OL(\d+)A$')
@@ -59,6 +60,7 @@ for data in read_input():
     try:
         d = json.loads(data)
     except:
+        traceback.print_exc()
         print(data)
         raise
     t = d['type']['key']

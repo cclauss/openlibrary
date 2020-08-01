@@ -13,6 +13,7 @@ import gzip
 import re
 import json
 import time
+import traceback
 
 t_sitemap = """$def with (things)
 <?xml version="1.0" encoding="UTF-8"?>
@@ -130,6 +131,7 @@ def write(path, text):
         f.write(text)
         f.close()
     except:
+        traceback.print_exc():
         print('write fail')
     #os.system("gzip " + path)
 

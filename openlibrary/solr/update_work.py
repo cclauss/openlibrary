@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import time
+import traceback
 from collections import defaultdict
 from unicodedata import normalize
 
@@ -127,6 +128,7 @@ def add_field(doc, name, value):
     try:
         field.text = normalize('NFC', six.text_type(strip_bad_char(value)))
     except:
+        traceback.print_exc()
         logger.error('Error in normalizing %r', value)
         raise
     doc.append(field)
@@ -222,6 +224,7 @@ def get_work_subjects(w):
                     v = v['value']
                 cur[v] = cur.get(v, 0) + 1
             except:
+                traceback.print_exc()
                 logger.error("Failed to process subject: %r", v)
                 raise
 
@@ -424,6 +427,7 @@ class SolrProcessor:
         try:
             subjects = four_types(get_work_subjects(w))
         except:
+            traceback.print_exc()
             logger.error('bad work: %s', w['key'])
             raise
 
@@ -447,6 +451,7 @@ class SolrProcessor:
                         v = v['value']
                     cur[v] = cur.get(v, 0) + 1
                 except:
+                    traceback.print_exc()
                     logger.error("bad subject: %r", v)
                     raise
         # FIXME END_REMOVE
@@ -1180,6 +1185,7 @@ def update_work(work):
             solr_doc = build_data(work)
             dict2element(solr_doc)
         except:
+            traceback.print_exc()
             logger.error("failed to update work %s", work['key'], exc_info=True)
         else:
             if solr_doc is not None:
@@ -1419,6 +1425,7 @@ def update_keys(keys, commit=True, output_file=None, commit_way_later=False):
             w = data_provider.get_document(k)
             requests += update_work(w)
         except:
+            traceback.print_exc()
             logger.error("Failed to update work %s", k, exc_info=True)
 
     if requests:
@@ -1441,6 +1448,7 @@ def update_keys(keys, commit=True, output_file=None, commit_way_later=False):
             e = data_provider.get_document(k)
             requests += update_edition(e)
         except:
+            traceback.print_exc()
             logger.error("Failed to update edition %s", k, exc_info=True)
     if requests:
         if commit:
@@ -1457,6 +1465,7 @@ def update_keys(keys, commit=True, output_file=None, commit_way_later=False):
         try:
             requests += update_author(k)
         except:
+            traceback.print_exc()
             logger.error("Failed to update author %s", k, exc_info=True)
 
     if requests:
@@ -1480,6 +1489,7 @@ def update_keys(keys, commit=True, output_file=None, commit_way_later=False):
         try:
             requests += update_subject(k)
         except:
+            traceback.print_exc()
             logger.error("Failed to update subject %s", k, exc_info=True)
     if requests:
         if commit:

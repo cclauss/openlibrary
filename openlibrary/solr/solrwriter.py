@@ -2,6 +2,7 @@
 """
 import logging
 import re
+import traceback
 
 from lxml.etree import tostring, Element
 from unicodedata import normalize
@@ -98,6 +99,7 @@ def add_field(doc, name, value):
                 value = value.decode('utf-8')
             field.text = normalize('NFC', value)
         except:
+            traceback.print_exc()
             logger.error('Error in normalizing %r', value)
             raise
         doc.append(field)

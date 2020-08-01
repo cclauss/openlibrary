@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import web
 import datetime
+import traceback
 import simplejson
 from collections import defaultdict
 
@@ -51,6 +52,7 @@ class DocumentLoader:
             try:
                 value = f(self, *a, **kw)
             except:
+                traceback.print_exc()
                 t.rollback()
                 raise
             else:
@@ -238,6 +240,7 @@ class Reindexer:
             self.delete_earlier_index(documents, tables)
             self.create_new_index(documents, tables)
         except:
+            traceback.print_exc()
             t.rollback()
             raise
         else:

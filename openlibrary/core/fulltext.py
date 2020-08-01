@@ -1,6 +1,7 @@
 
 import simplejson
 import logging
+import traceback
 
 import web
 from infogami import config
@@ -21,11 +22,13 @@ def fulltext_search_api(params):
         logger = logging.getLogger("openlibrary.inside")
         logger.debug('URL: ' + search_select)
     except:
+        traceback.print_exc()
         return {'error': 'Unable to query search engine'}
 
     try:
         return simplejson.loads(json_data)
     except:
+        traceback.print_exc()
         return {'error': 'Error converting search engine data to JSON'}
 
 

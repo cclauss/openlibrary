@@ -53,7 +53,7 @@ def _get_type(obj):
     """
     try:
         t = obj.__class__
-    except:
+    except AttributeError:
         t = type(obj)
 
     mod = t.__module__

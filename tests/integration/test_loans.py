@@ -5,6 +5,7 @@ testing loans and waitlist
 """
 
 import time
+import traceback
 import unittest
 from . import OLSession
 
@@ -69,6 +70,7 @@ class Borrow_Test(unittest.TestCase):
                 time.sleep(3)
                 ia_cta_btn = olsession.driver.find_element_by_xpath(xpath)
             except:
+                traceback.print_exc()
                 if make_assert:
                     raise
                 return False
@@ -97,6 +99,7 @@ class Borrow_Test(unittest.TestCase):
                 ol_cta_btn = olsession.driver.find_element_by_id(
                     '%s_ebook' % check_cta)
             except:
+                traceback.print_exc()
                 if make_assert:
                     raise
                 return False
@@ -112,6 +115,7 @@ class Borrow_Test(unittest.TestCase):
                     alert = olsession.driver.switch_to.alert
                     alert.accept()
                 except:
+                    traceback.print_exc()
                     pass
                 time.sleep(3)
                 olsession.goto('/books/%s' % olid)

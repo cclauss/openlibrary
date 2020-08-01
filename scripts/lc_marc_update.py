@@ -9,6 +9,7 @@ from time import sleep
 from lxml import etree
 import os
 import sys
+import traceback
 import httplib
 import json
 import argparse
@@ -62,6 +63,7 @@ for attempt in range(attempts):
         root = etree.parse(url).getroot()
         break
     except:
+        traceback.print_exc()
         if attempt == attempts-1:
             raise
         print('error on attempt %d, retrying in %s seconds' % (attempt, wait))

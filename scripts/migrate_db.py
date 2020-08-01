@@ -6,6 +6,7 @@ from __future__ import print_function
 import itertools
 import os
 import sys
+import traceback
 
 import simplejson
 import web
@@ -34,6 +35,7 @@ class Upgrader:
                 f = getattr(self, "upgrade_%03d" % (i+1))
                 f(db)
         except:
+            traceback.print_exc()
             print()
             print("**ERROR**: Failed to complete the upgrade. rolling back...")
             print()

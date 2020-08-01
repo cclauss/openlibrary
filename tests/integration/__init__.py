@@ -1,6 +1,7 @@
 #-*- coding: utf-8 -*-
 
 import time
+import traceback
 import yaml
 import atexit
 from selenium import webdriver
@@ -17,6 +18,7 @@ class OLSession(object):
         try:
             self.driver = webdriver.Chrome()
         except:
+            traceback.print_exc()
             self.driver = webdriver.Firefox()
 
         self.driver.set_window_size(1200, 1200)

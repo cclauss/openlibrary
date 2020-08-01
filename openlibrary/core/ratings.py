@@ -1,3 +1,5 @@
+import traceback
+
 from openlibrary.utils.dateutil import DATE_ONE_MONTH_AGO, DATE_ONE_WEEK_AGO
 
 from . import db
@@ -89,6 +91,7 @@ class Ratings(object):
             return oldb.delete('ratings', where=(
                 'work_id=$work_id AND username=$username'), vars=where)
         except:  # we want to catch no entry exists
+            traceback.print_exc()
             return None
 
     @classmethod
