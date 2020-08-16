@@ -11,6 +11,7 @@ from infogami import config
 
 from openlibrary.core import admin, cache, ia, lending, \
     helpers as h
+from openlibrary.core.models import Thing
 from openlibrary.core.sponsorships import get_sponsorable_editions
 from openlibrary.utils import dateutil
 from openlibrary.plugins.upstream.utils import get_blog_feeds
@@ -234,8 +235,21 @@ def format_book_data(book):
     def get_authors(doc):
         return [web.storage(key=a.key, name=a.name or None) for a in doc.get_authors()]
 
+    print(f"a: {type(book)}: {book}")
+    if not isinstance(book, Thing):
+        book = web.ctx.site.get(book)
+    print(f"b: {type(book)}: {book}")
     work = book.works and book.works[0]
+    print(f"c: {type(work)}: {work}")
+    if not isinstance(work, Thing):
+        work = web.ctx.site.get(work)
+    print(f"d: {type(work)}: {work}")
+    if work:
+        work = web.ctx.site.get(work)
+        assert work
+        print(f"e: {work.get_authors}: {work.get_authors()}")
     d.authors = get_authors(work if work else book)
+    print(f"f: {d}")
     d.work_key = work.key if work else book.key
     cover = work.get_cover() if work and work.get_cover() else book.get_cover()
 

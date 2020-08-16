@@ -68,4 +68,4 @@ su openlibrary -c "$PY_ENV_VARS && scripts/coverstore-server $COVER_CONFIG \
 
 # ol server, running in the foreground to avoid exiting container
 su openlibrary -c "$PY_ENV_VARS && authbind --deep scripts/openlibrary-server $CONFIG \
-                     --gunicorn --reload --workers 4 --timeout 180 --bind :80"
+                     --gunicorn --reload --workers 1 --timeout 180 --bind :80"
