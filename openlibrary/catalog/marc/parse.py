@@ -4,6 +4,7 @@ from openlibrary.catalog.marc.get_subjects import subjects_for_work
 from openlibrary.catalog.marc.marc_base import BadMARC, NoTitle, MarcException
 from openlibrary.catalog.utils import pick_first_date, tidy_isbn, flip_name, remove_trailing_dot, remove_trailing_number_dot
 
+re_bad_char = re.compile(u'\ufffd')
 re_question = re.compile(r'^\?+$')
 re_lccn = re.compile(r'([ \dA-Za-z\-]{3}[\d/-]+).*')
 re_oclc = re.compile(r'^\(OCoLC\).*?0*(\d+)')
@@ -537,7 +538,6 @@ def update_edition(rec, edition, func, field):
     if v:
         edition[field] = v
 
-re_bad_char = re.compile(u'[\xa0\xf6]')
 
 def read_edition(rec):
     """
@@ -565,19 +565,19 @@ def read_edition(rec):
         f = re_bad_char.sub(' ', tag_008[0])
         if not f:
             raise BadMARC("'008' field must not be blank")
-        publish_date = str(f)[7:11]
+        publish_date = f[7:11]
 
         if publish_date.isdigit() and publish_date != '0000':
             edition["publish_date"] = publish_date
-        if str(f)[6] == 't':
-            edition["copyright_date"] = str(f)[11:15]
-        publish_country = str(f)[15:18]
+        if f[6] == 't':
+            edition["copyright_date"] = f[11:15]
+        publish_country = f[15:18]
         if publish_country not in ('|||', '   ', '\x01\x01\x01', '???'):
             edition["publish_country"] = publish_country.strip()
-        lang = str(f)[35:38]
+        lang = f[35:38]
         if lang not in ('   ', '|||', '', '???', 'zxx'):
             # diebrokeradical400poll
-            if str(f)[34:37].lower() == 'eng':
+            if f[34:37].lower() == 'eng':
                 lang = 'eng'
             else:
                 lang = lang.lower()

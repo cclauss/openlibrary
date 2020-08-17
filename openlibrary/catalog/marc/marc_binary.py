@@ -51,15 +51,15 @@ class BinaryDataField():
         """
         self.rec = rec
         if line:
-            while line[-2] == b'\x1e':  # ia:engineercorpsofhe00sher
+            while line[-2] == b'\x1e'[0]:  # ia:engineercorpsofhe00sher
                 line = line[:-1]
         self.line = line
 
     def translate(self, data):
         """
-        :param data bytes: raw MARC21 field data content, in either ut8 or marc8 encoding
+        :param data bytes: raw MARC21 field data content, in either utf8 or marc8 encoding
         :rtype: str
-        :return: A NCF normalized unicode str
+        :return: A NFC normalized unicode str
         """
         if self.rec.marc8():
             data = mnemonics.read(data)
@@ -74,7 +74,7 @@ class BinaryDataField():
 
     def remove_brackets(self):
         line = self.line
-        if line[4] == b'[' and line[-2] == b']':
+        if line[4] == b'['[0] and line[-2] == b']'[0]:
             self.line = line[0:4] + line[5:-2] + line[-1]
 
     def get_subfields(self, want):
@@ -134,7 +134,10 @@ class MarcBinary(MarcBase):
         return iter_dir
 
     def leader(self):
-        return self.data[:24]
+        """
+        :rtype: str
+        """
+        return self.data[:24].decode('utf-8', errors='replace')
 
     def marc8(self):
         """
@@ -142,7 +145,7 @@ class MarcBinary(MarcBase):
 
         :rtype: bool
         """
-        return self.leader()[9] == b' '
+        return self.leader()[9] == ' '
 
     def all_fields(self):
         return self.read_fields()
@@ -166,7 +169,11 @@ class MarcBinary(MarcBase):
                 if tag == '008' and line == b'':
                     continue
                 assert line[-1] == b'\x1e'[0]
-                yield tag, line[:-1].decode()
+                # Tag contents should be strings in utf-8 by this point
+                # if not, the MARC is corrupt in some way. Attempt to rescue
+                # using 'replace' error handling. We don't want to change offsets
+                # in positionaly defined control fields like 008
+                yield tag, line[:-1].decode('utf-8', errors='replace')
             else:
                 yield tag, BinaryDataField(self, line)
 
