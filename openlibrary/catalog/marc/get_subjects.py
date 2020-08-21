@@ -72,14 +72,12 @@ def find_aspects(f):
 subject_fields = set(['600', '610', '611', '630', '648', '650', '651', '662'])
 
 def read_subjects(rec):
-    print(f"{type(rec)}: {rec}")
     subjects = defaultdict(lambda: defaultdict(int))
     for tag, field in rec.read_fields(subject_fields):
         f = rec.decode_field(field)
         aspects = find_aspects(f)
-        print(tag, field, f, aspects)
 
-        if tag == '600':  # people
+        if tag == '600': # people
             name_and_date = []
             for k, v in f.get_subfields(['a', 'b', 'c', 'd']):
                 v = '(' + v.strip('.() ') + ')' if k == 'd' else v.strip(' /,;:')
@@ -127,14 +125,6 @@ def read_subjects(rec):
                     subjects['work'][v] += 1
         elif tag == '650': # topical
             for v in f.get_subfield_values(['a']):
-                print("{v = }")
-                if v:
-                    v = v.strip()
-                v = tidy_subject(v)
-                if v:
-                    subjects['subject'][v] += 1
-            for v in field.get_subfield_values(['a']):
-                print("field {v = }")
                 if v:
                     v = v.strip()
                 v = tidy_subject(v)
