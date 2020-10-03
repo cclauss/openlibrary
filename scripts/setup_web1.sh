@@ -19,10 +19,10 @@ ls -l  # nothing
 
 sudo git clone https://github.com/internetarchive/openlibrary
 # sudo git clone https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/internetarchive/olsystem
-sudo chown openlibrary *
+sudo chown openlibrary /opt/*
 ls -l  # openlibrary, olsystem owned by openlibrary
 
-cd openlibrary
+cd /opt/openlibrary
 sudo docker-compose down && \
     sudo docker-compose up --no-deps -d memcached && \
     sudo docker-compose -f docker-compose.yml -f docker-compose.infogami-local.yml -f docker-compose.production.yml up --no-deps -d web
