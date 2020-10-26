@@ -1,12 +1,14 @@
 name: test_on_docker
-on: [pull_request, push]
+on: push
 jobs:
   test_on_docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: docker-compose build
-      - run: docker-compose up -d
+      - run: docker-compose build  # ~ 4 minutes on GitHub Actions
+      - run: docker-compose up -d  # ~ 30 seconds on GitHub Actions
+      # The next three commands all fail with `the input device is not a TTY`
+      # See: https://stackoverflow.com/questions/43099116
+      - run: docker-compose exec home make test    || true
       - run: docker-compose exec home make test-py || true
       - run: docker-compose exec home npm run test || true
-      #  - run: docker-compose exec home make test || true
