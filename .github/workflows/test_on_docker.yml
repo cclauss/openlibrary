@@ -6,3 +6,5 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: docker-compose build
+      - run: docker-compose up -d
+      - run: docker-compose exec home make test
