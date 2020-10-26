@@ -7,4 +7,6 @@ jobs:
       - uses: actions/checkout@v2
       - run: docker-compose build
       - run: docker-compose up -d
-      - run: docker-compose exec home make test
+      - run: docker-compose exec home make test-py || true
+      - run: docker-compose exec home npm run test || true
+      #  - run: docker-compose exec home make test || true
