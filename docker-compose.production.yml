@@ -8,17 +8,18 @@ version: "3"
 services:
   web:
     restart: always
-    hostname: ${HOSTNAME:-$HOST}
+    hostname: "$HOSTNAME"
     environment:
       - GUNICORN_OPTS= --workers 50 --timeout 300 --max-requests 500
       - OL_CONFIG=/olsystem/etc/openlibrary.yml
       - PYENV_VERSION=3.8.6
     volumes:
-      - ../olsystem:/olsystem
       - ../booklending_utils:/booklending_utils
+      - ../olsystem:/olsystem
+      - ../olsystem/etc:/openlibrary/.config
   covers:
     restart: always
-    hostname: ${HOSTNAME:-$HOST}
+    hostname: "$HOSTNAME"
     environment:
       - GUNICORN_OPTS= --workers 30 --max-requests 500
       - COVERSTORE_CONFIG=/olsystem/etc/coverstore.yml
@@ -28,7 +29,7 @@ services:
       - /1:/1
   infobase:
     restart: always
-    hostname: ${HOSTNAME:-$HOST}
+    hostname: "$HOSTNAME"
     environment:
       - INFOBASE_OPTS= fastcgi
       - INFOBASE_CONFIG=/olsystem/etc/infobase.yml
