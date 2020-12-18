@@ -16,7 +16,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.oldev
-    command: docker/ol-affiliate-server-start.sh
+    command: ls /openlibrary/docker/ ; docker/ol-affiliate-server-start.sh
     ports:
       - 31337:31337
     volumes:
