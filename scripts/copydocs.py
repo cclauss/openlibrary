@@ -252,6 +252,8 @@ def copy(src, dest, keys, comment, recursive=False, saved=None, cache=None):
 
     keys = [doc['key'] for doc in docs]
     print("saving", keys)
+    for i, doc in enumerate(docs):
+        print(i, doc, file=web.debug)
     print(dest.save_many(docs, comment=comment))
     saved.update(keys)
 
