@@ -33,7 +33,7 @@ class OLError(Exception):
     def __init__(self, http_error):
         self.code = http_error.code
         self.headers = http_error.headers
-        msg = http_error.msg + ": " + http_error.read()
+        msg = http_error.msg + ": " + http_error.read().decode("utf-8")
         Exception.__init__(self, msg)
 
 
@@ -96,7 +96,12 @@ class OpenLibrary:
         headers = {'Content-Type': 'application/json'}
         try:
             data = json.dumps(dict(username=username, password=password))
-            response = self._request('/account/login', method='POST', data=data, headers=headers)
+            response = self._request(
+                '/account/login',
+                method='POST',
+                data=data.encode('utf-8'),
+                headers=headers
+            )
         except urllib.error.HTTPError as e:
             response = e
 
@@ -145,7 +150,12 @@ class OpenLibrary:
         if action:
             headers['42-action'] = action
 
-        response = self._request('/api/' + name, method="POST", data=json.dumps(query), headers=headers)
+        response = self._request(
+            '/api/' + name,
+            method="POST",
+            data=json.dumps(query).encode('utf-8'),
+            headers=headers
+        )
         return json.loads(response.read())
 
     def save_many(self, query, comment=None, action=None):
