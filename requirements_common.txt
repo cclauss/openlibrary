@@ -19,7 +19,7 @@ Pygments==2.4.2
 pymarc==3.2.0; python_version < '3.6'
 pymarc==4.0.0; python_version >= '3.6'
 python-memcached==1.59
-PyYAML==5.3.1
+PyYAML==5.4.1
 sentry-sdk==0.19.5
 simplejson==3.16.0
 six==1.15.0
