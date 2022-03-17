@@ -44,7 +44,7 @@
     "@storybook/addon-links": "6.3.8",
     "@storybook/storybook-deployer": "2.8.10",
     "@storybook/vue": "6.3.8",
-    "@vue/cli": "4.5.13",
+    "@vue/cli": "5.0.3",
     "@vue/cli-plugin-babel": "4.5.13",
     "@vue/cli-plugin-eslint": "4.5.13",
     "@vue/cli-service": "4.5.13",
