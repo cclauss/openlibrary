@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 import requests
@@ -37,7 +39,7 @@ AMAZON_FULL_DATE_RE = re.compile(r'\d{4}-\d\d-\d\d')
 ISBD_UNIT_PUNCT = ' : '  # ISBD cataloging title-unit separator punctuation
 
 
-def setup(config):
+def setup(config) -> None:
     global affiliate_server_url
     affiliate_server_url = config.get('affiliate_server')
 
@@ -68,12 +70,12 @@ class AmazonAPI:
 
     def __init__(
         self,
-        key,
-        secret,
-        tag,
-        host='webservices.amazon.com',
-        region='us-east-1',
-        throttling=0.9,
+        key: str,
+        secret: str,
+        tag: str,
+        host: str = 'webservices.amazon.com',
+        region: str = 'us-east-1',
+        throttling: float = 0.9,
     ):
         """
         Creates an instance containing your API credentials.
@@ -85,8 +87,6 @@ class AmazonAPI:
         :param region (string): which regional host to query
         :param throttling (float): Reduce this value to wait longer
           between API calls.
-        :return: Amazon metadata for one product
-        :rtype: dict
         """
         self.tag = tag
         self.throttling = throttling
@@ -106,16 +106,16 @@ class AmazonAPI:
             )
         )
 
-    def get_product(self, asin, serialize=False, **kwargs):
+    def get_product(self, asin, serialize: bool = False, **kwargs):
         products = self.get_products([asin], **kwargs)
         if products:
             return next(self.serialize(p) if serialize else p for p in products)
 
     def get_products(
         self,
-        asins,
-        serialize=False,
-        marketplace='www.amazon.com',
+        asins: list | str,
+        serialize: bool = False,
+        marketplace: str = 'www.amazon.com',
         resources=None,
         **kwargs,
     ):
@@ -155,14 +155,13 @@ class AmazonAPI:
         return products if not serialize else [self.serialize(p) for p in products]
 
     @staticmethod
-    def serialize(product):
+    def serialize(product) -> dict:
         """Takes a full Amazon product Advertising API returned AmazonProduct
         with multiple ResponseGroups, and extracts the data we are
         interested in.
 
         :param AmazonAPI product:
         :return: Amazon metadata for one product
-        :rtype: dict
 
         {
           'price': '$54.06',
@@ -241,7 +240,15 @@ class AmazonAPI:
                 and item_info.title
                 and getattr(item_info.title, 'display_value')
             ),
-            'covers': (images.primary.large.url if images and images.primary and images.primary.large and images.primary.large.url and not '/01RmK+J4pJL.' in images.primary.large.url else None),
+            'covers': (
+                images.primary.large.url
+                if images
+                and images.primary
+                and images.primary.large
+                and images.primary.large.url
+                and '/01RmK+J4pJL.' not in images.primary.large.url
+                else None
+            ),
             'authors': attribution
             and [{'name': contrib.name} for contrib in attribution.contributors],
             'publishers': list({p for p in (brand, manufacturer) if p}),
@@ -280,7 +287,7 @@ def get_amazon_metadata(id_, id_type='isbn', resources=None):
     return cached_get_amazon_metadata(id_, id_type=id_type, resources=resources)
 
 
-def search_amazon(title='', author=''):
+def search_amazon(title: str = '', author: str = ''):
     """Uses the Amazon Product Advertising API ItemSearch operation to search for
     books by author and/or title.
     https://docs.aws.amazon.com/AWSECommerceService/latest/DG/ItemSearch.html
@@ -295,7 +302,7 @@ def search_amazon(title='', author=''):
     pass
 
 
-def _get_amazon_metadata(id_, id_type='isbn', resources=None):
+def _get_amazon_metadata(id_, id_type: str = 'isbn', resources=None):
     """Uses the Amazon Product Advertising API ItemLookup operation to locatate a
     specific book by identifier; either 'isbn' or 'asin'.
     https://docs.aws.amazon.com/AWSECommerceService/latest/DG/ItemLookup.html
@@ -324,7 +331,7 @@ def _get_amazon_metadata(id_, id_type='isbn', resources=None):
     return None
 
 
-def split_amazon_title(full_title):
+def split_amazon_title(full_title: str) -> tuple[str, str | None]:
     """Splits an Amazon title into (title, subtitle),
     strips parenthetical tags.
     :param str full_title:
@@ -390,7 +397,7 @@ def clean_amazon_metadata_for_load(metadata):
     return conforming_metadata
 
 
-def create_edition_from_amazon_metadata(id_, id_type='isbn'):
+def create_edition_from_amazon_metadata(id_, id_type: str = 'isbn'):
     """Fetches Amazon metadata by id from Amazon Product Advertising API, attempts to
     create OL edition from metadata, and returns the resulting edition
     key `/key/OL..M` if successful or None otherwise.
@@ -439,11 +446,10 @@ def cached_get_amazon_metadata(*args, **kwargs):
 
 
 @public
-def get_betterworldbooks_metadata(isbn):
+def get_betterworldbooks_metadata(isbn: str) -> dict:
     """
     :param str isbn: Unnormalisied ISBN10 or ISBN13
     :return: Metadata for a single BWB book, currently listed on their catalog, or error dict.
-    :rtype: dict
     """
 
     isbn = normalize_isbn(isbn)
@@ -454,26 +460,25 @@ def get_betterworldbooks_metadata(isbn):
         return betterworldbooks_fmt(isbn)
 
 
-def _get_betterworldbooks_metadata(isbn):
+def _get_betterworldbooks_metadata(isbn: str) -> dict:
     """Returns price and other metadata (currently minimal)
     for a book currently available on betterworldbooks.com
 
     :param str isbn: Normalised ISBN10 or ISBN13
     :return: Metadata for a single BWB book currently listed on their catalog, or error dict.
-    :rtype: dict
     """
 
     url = BETTERWORLDBOOKS_API_URL + isbn
     response = requests.get(url)
     if response.status_code != requests.codes.ok:
         return {'error': response.text, 'code': response.status_code}
-    response = response.text
-    new_qty = re.findall("<TotalNew>([0-9]+)</TotalNew>", response)
-    new_price = re.findall(r"<LowestNewPrice>\$([0-9.]+)</LowestNewPrice>", response)
-    used_price = re.findall(r"<LowestUsedPrice>\$([0-9.]+)</LowestUsedPrice>", response)
-    used_qty = re.findall("<TotalUsed>([0-9]+)</TotalUsed>", response)
-    market_price = re.findall(
-        r"<LowestMarketPrice>\$([0-9.]+)</LowestMarketPrice>", response
+    resp = response.text
+    new_qty = re.findall("<TotalNew>([0-9]+)</TotalNew>", resp)
+    new_price = re.findall(r"<LowestNewPrice>\$([0-9.]+)</LowestNewPrice>", resp)
+    used_price = re.findall(r"<LowestUsedPrice>\$([0-9.]+)</LowestUsedPrice>", resp)
+    used_qty = re.findall("<TotalUsed>([0-9]+)</TotalUsed>", resp)
+    market_prices = re.findall(
+        r"<LowestMarketPrice>\$([0-9.]+)</LowestMarketPrice>", resp
     )
     price = qlt = None
 
@@ -487,17 +492,21 @@ def _get_betterworldbooks_metadata(isbn):
             price = _price
             qlt = 'new'
 
-    market_price = ('$' + market_price[0]) if market_price else None
+    market_price = ('$' + market_prices[0]) if market_prices else None
     return betterworldbooks_fmt(isbn, qlt, price, market_price)
 
 
-def betterworldbooks_fmt(isbn, qlt=None, price=None, market_price=None):
+def betterworldbooks_fmt(
+    isbn: str,
+    qlt: str | None = None,
+    price: str | None = None,
+    market_price: str | None = None,
+) -> dict:
     """Defines a standard interface for returning bwb price info
 
     :param str isbn:
     :param str qlt: Quality of the book, e.g. "new", "used"
     :param str price: Price of the book as a decimal str, e.g. "4.28"
-    :rtype: dict
     """
     price_fmt = f"${price} ({qlt})" if price and qlt else None
     return {
