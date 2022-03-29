@@ -118,7 +118,7 @@ class DataProvider:
     """
 
     def __init__(self) -> None:
-        self.ia_cache: dict[str, dict | None] = dict()
+        self.ia_cache: dict[str, Optional[dict]] = dict()
 
     @staticmethod
     async def _get_lite_metadata(ocaids: list[str], _recur_depth=0, _max_recur_depth=3):

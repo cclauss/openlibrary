@@ -60,7 +60,7 @@ def make_path_prefix(olid, date=None):
     )
 
 
-def write_image(data: bytes, prefix: str) -> Image.Image | None:
+def write_image(data: bytes, prefix: str) -> Optional[Image.Image]:
     path_prefix = find_image_path(prefix)
     dirname = os.path.dirname(path_prefix)
     if not os.path.exists(dirname):

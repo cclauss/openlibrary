@@ -77,7 +77,7 @@ class Ratings:
         return result[0] if result else {}
 
     @classmethod
-    def get_work_ratings_summary(cls, work_id: int) -> WorkRatingsSummary | None:
+    def get_work_ratings_summary(cls, work_id: int) -> Optional[WorkRatingsSummary]:
         oldb = db.get_db()
         # NOTE: Using some old postgres syntax here :/ for modern postgres syntax,
         # see the query in solr_builder.py

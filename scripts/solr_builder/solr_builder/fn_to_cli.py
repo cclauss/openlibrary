@@ -44,7 +44,7 @@ class FnToCLI:
             description=docs.split(':param', 1)[0],
             formatter_class=ArgumentDefaultsHelpFormatter,
         )
-        self.args: Namespace | None = None
+        self.args: typing.Optional[Namespace] = None
         for arg in arg_names:
             optional = arg in defaults
             cli_name = arg.replace('_', '-')

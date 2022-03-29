@@ -54,6 +54,6 @@ repos:
     rev: v2.31.0
     hooks:
       - id: pyupgrade
-        args:
-          - --py310-plus
+        args:  # Solr on Cython is not yet ready for 3.10 type hints
+          - --py39-plus
           - --keep-runtime-typing

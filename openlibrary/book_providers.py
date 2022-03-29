@@ -26,7 +26,7 @@ class AbstractBookProvider:
     def solr_key(self):
         return f"id_{self.identifier_key}"
 
-    def get_identifiers(self, ed_or_solr: Edition | dict) -> list[str]:
+    def get_identifiers(self, ed_or_solr: Union[Edition, dict]) -> list[str]:
         return (
             # If it's an edition
             ed_or_solr.get('identifiers', {}).get(self.identifier_key, [])
@@ -38,19 +38,19 @@ class AbstractBookProvider:
     def choose_best_identifier(self, identifiers: list[str]) -> str:
         return identifiers[0]
 
-    def get_best_identifier(self, ed_or_solr: Edition | dict) -> str:
+    def get_best_identifier(self, ed_or_solr: Union[Edition, dict]) -> str:
         identifiers = self.get_identifiers(ed_or_solr)
         assert identifiers
         return self.choose_best_identifier(identifiers)
 
-    def get_best_identifier_slug(self, ed_or_solr: Edition | dict) -> str:
+    def get_best_identifier_slug(self, ed_or_solr: Union[Edition, dict]) -> str:
         """Used in eg /work/OL1W?edition=ia:foobar URLs, for example"""
         return f'{self.short_name}:{self.get_best_identifier(ed_or_solr)}'
 
     def get_template_path(self, typ: Literal['read_button', 'download_options']) -> str:
         return f"book_providers/{self.short_name}_{typ}.html"
 
-    def render_read_button(self, ed_or_solr: Edition | dict):
+    def render_read_button(self, ed_or_solr: Union[Edition, dict]):
         return render_template(
             self.get_template_path('read_button'), self.get_best_identifier(ed_or_solr)
         )
@@ -79,7 +79,7 @@ class InternetArchiveProvider(AbstractBookProvider):
     def solr_key(self):
         return f"ia"
 
-    def get_identifiers(self, ed_or_solr: Edition | dict) -> list[str]:
+    def get_identifiers(self, ed_or_solr: Union[Edition, dict]) -> list[str]:
         # Solr work record augmented with availability
         # Sometimes it's set explicitly to None, for some reason
         availability = ed_or_solr.get('availability', {}) or {}
@@ -166,7 +166,7 @@ PROVIDER_ORDER: list[AbstractBookProvider] = [
 ]
 
 
-def get_cover_url(ed_or_solr: Edition | dict) -> str | None:
+def get_cover_url(ed_or_solr: Union[Edition, dict]) -> Optional[str]:
     """
     Get the cover url most appropriate for this edition or solr work search result
     """
@@ -210,7 +210,7 @@ def is_non_ia_ocaid(ocaid: str) -> bool:
     return any(provider.is_own_ocaid(ocaid) for provider in providers)
 
 
-def get_book_provider_by_name(short_name: str) -> AbstractBookProvider | None:
+def get_book_provider_by_name(short_name: str) -> Optional[AbstractBookProvider]:
     return next((p for p in PROVIDER_ORDER if p.short_name == short_name), None)
 
 
@@ -242,7 +242,7 @@ def get_provider_order(prefer_ia=False) -> list[AbstractBookProvider]:
 
 
 def get_book_providers(
-    ed_or_solr: Edition | dict
+    ed_or_solr: Union[Edition, dict]
 ) -> Iterator[AbstractBookProvider]:
 
     # On search results, we want to display IA copies first.
@@ -268,18 +268,18 @@ def get_book_providers(
 
 
 def get_book_provider(
-        ed_or_solr: Edition | dict
-) -> AbstractBookProvider | None:
+        ed_or_solr: Union[Edition, dict]
+) -> Optional[AbstractBookProvider]:
     return next(get_book_providers(ed_or_solr), None)
 
 
 def get_best_edition(
         editions: list[Edition]
-) -> tuple[Edition | None, AbstractBookProvider | None]:
+) -> tuple[Optional[Edition], Optional[AbstractBookProvider]]:
     provider_order = get_provider_order(True)
 
     # Map provider name to position/ranking
-    provider_rank_lookup: dict[AbstractBookProvider | None, int] = {
+    provider_rank_lookup: dict[Optional[AbstractBookProvider], int] = {
         provider: i
         for i, provider in enumerate(provider_order)
     }

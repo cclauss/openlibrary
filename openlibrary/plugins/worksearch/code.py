@@ -424,8 +424,8 @@ def build_q_list(param):
 
 
 def execute_solr_query(
-    solr_path: str, params: dict | list[tuple[str, Any]]
-) -> Response | None:
+    solr_path: str, params: Union[dict, list[tuple[str, Any]]]
+) -> Optional[Response]:
     stats.begin("solr", url=f'{solr_path}?{urlencode(params)}')
     try:
         response = requests.get(solr_path, params=params, timeout=10)
@@ -439,8 +439,8 @@ def execute_solr_query(
 
 
 def parse_json_from_solr_query(
-    solr_path: str, params: dict | list[tuple[str, Any]]
-) -> dict | None:
+    solr_path: str, params: Union[dict, list[tuple[str, Any]]]
+) -> Optional[dict]:
     """
     Returns a json.loaded Python object or None
     """
