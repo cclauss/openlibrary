@@ -513,7 +513,7 @@ def url_quote(text):
 
 
 @public
-def urlencode(dict_or_list_of_tuples: Union[dict, list[tuple[str, Any]]]) -> str:
+def urlencode(dict_or_list_of_tuples: dict | list[tuple[str, Any]]) -> str:
     """
     You probably want to use this, if you're looking to urlencode parameters. This will
     encode things to utf8 that would otherwise cause urlencode to error.
@@ -997,7 +997,7 @@ class HTMLTagRemover(HTMLParser):
 
 
 @public
-def reformat_html(html_str: str, max_length: Optional[int] = None) -> str:
+def reformat_html(html_str: str, max_length: int | None = None) -> str:
     """
     Reformats an HTML string, removing all opening and closing tags.
     Adds a line break element between each set of text content.

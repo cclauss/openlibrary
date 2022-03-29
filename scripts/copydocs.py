@@ -159,8 +159,8 @@ class KeyVersionPair(namedtuple('KeyVersionPair', 'key version')):
 
 
 def copy(
-        src: Union[Disk, OpenLibrary],
-        dest: Union[Disk, OpenLibrary],
+        src: Disk | OpenLibrary,
+        dest: Disk | OpenLibrary,
         keys: list[str],
         comment: str,
         recursive=False,
@@ -356,9 +356,9 @@ def main(
 
     # Mypy doesn't handle union-ing types across if statements -_-
     # https://github.com/python/mypy/issues/6233
-    src_ol: Union[Disk, OpenLibrary] = (
+    src_ol: Disk | OpenLibrary = (
         OpenLibrary(src) if src.startswith("http://") else Disk(src))
-    dest_ol: Union[Disk, OpenLibrary] = (
+    dest_ol: Disk | OpenLibrary = (
         OpenLibrary(dest) if dest.startswith("http://") else Disk(dest))
 
     if isinstance(dest_ol, OpenLibrary):

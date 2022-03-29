@@ -4,7 +4,7 @@
 
 # Learn more about this config here: https://pre-commit.com/
 default_language_version:
-  python: python3.9
+  python: python3.10
 
 repos:
   - repo: local
@@ -55,5 +55,5 @@ repos:
     hooks:
       - id: pyupgrade
         args:
-          - --py39-plus
+          - --py310-plus
           - --keep-runtime-typing
