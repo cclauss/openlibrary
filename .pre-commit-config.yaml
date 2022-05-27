@@ -24,8 +24,8 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-yaml
       - id: detect-private-key
-      - id: double-quote-string-fixer
-      - id: end-of-file-fixer
+      # - id: double-quote-string-fixer  # enabling this will modified many Python files
+      # - id: end-of-file-fixer  # enabling this will modified 400+ of files!
       - id: mixed-line-ending
       - id: requirements-txt-fixer
       - id: trailing-whitespace
