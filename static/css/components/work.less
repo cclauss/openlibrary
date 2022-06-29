@@ -1,5 +1,10 @@
 @import (less) "base/dl.less";
 
+@sidebar-width: 225px;
+@sidebar-width-with-margin: 60px + @sidebar-width;
+@compact-title-height: 35px;
+@test-body-mobile-width: 1060px;
+
 /* stylelint-disable no-descending-specificity */
 .workDetails {
   padding: 20px 0;
@@ -148,9 +153,7 @@ h2.edition-byline {
 
 .work-menu {
   border-bottom: 1px solid @lighter-grey;
-  padding-bottom: 5px;
   font-weight: bold;
-  margin-top: 20px;
 
   &.sticky {
     position: sticky;
@@ -158,38 +161,62 @@ h2.edition-byline {
     display: block;
     background: @white;
     z-index: @z-index-level-3;
-    padding-top: 10px;
+    white-space: nowrap;
+    overflow-x: auto;
+    // Make tab bar full width on mobile
+    margin-left: -@contentBody-padding;
+    margin-right: -@contentBody-padding;
+
+    // indent it a bit to make it look more scrollable
+    &:before, &:after {
+      display: inline-block;
+      content: "";
+      width: 20%;
+    }
+
+    scroll-behavior: smooth;
+  }
+}
+
+@media (min-width: @width-breakpoint-mobile) {
+  .work-menu.sticky {
+    &:before, &:after {
+      display: none;
+    }
   }
 }
 
 @media only screen and (min-width: @width-breakpoint-tablet) {
   .work-menu.sticky {
-    top: 0;
+    top: @compact-title-height;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
   }
 }
 
 .work-menu li {
   display: inline;
-  padding: 0 15px;
-  padding-bottom: 5px;
   font-size: 13px;
 }
 
 .work-menu li a {
   text-decoration: none;
   color: @grey;
-}
-
-.work-menu li.selected {
-  border-bottom: 2px solid @link-blue;
-}
-
-.work-menu li:hover {
-  border-bottom: 2px solid @link-blue;
+  padding: 12px 15px 8px;
+  display: inline-block;
+  @media only screen and (min-width: @width-breakpoint-tablet) {
+    padding-top: 4px;
+  }
 }
 
 .work-menu li.selected a {
   color: @link-blue;
+  border-bottom: 2px solid @link-blue;
+}
+
+.work-menu li:hover a {
+  border-bottom: 2px solid @link-blue;
 }
 
 a.section-anchor {
@@ -235,7 +262,7 @@ div.editionTools {
   }
   div.edition {
     &Cover {
-      width: 225px;
+      width: @sidebar-width;
       margin-right: 1.5em;
       margin-bottom: 0;
     }
@@ -341,3 +368,16 @@ div.editionTools {
   font-weight: normal;
   color: @link-blue;
 }
+@media only screen and (max-width: @width-breakpoint-desktop){
+  .desktop-book-header{
+    display: none;
+  }
+}
+
+.mobile-book-header {
+  h1 {
+    line-height: normal;
+  }
+}
+
+@import (less) "components/compact-title.less";

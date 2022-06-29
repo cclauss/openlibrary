@@ -29,7 +29,7 @@
     "lint-fix:js": "eslint --fix --ext js,vue .",
     "lint-fix:css": "stylelint --fix ./**/*.{less,vue}",
     "test": "npm run test:js && bundlesize",
-    "test:js": "jest --testRegex tests/unit/**/test.*.js",
+    "test:js": "jest",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
     "deploy-storybook": "storybook-to-ghpages --ci --branch=storybook"
@@ -48,7 +48,7 @@
     "@vue/cli-plugin-babel": "4.5.13",
     "@vue/cli-plugin-eslint": "4.5.13",
     "@vue/cli-service": "4.5.13",
-    "babel-eslint": "10.1.0",
+    "@babel/eslint-parser": "^7.17.0",
     "babel-loader": "8.2.2",
     "bundlesize": "0.18.1",
     "chart.js": "2.9.4",
@@ -57,10 +57,12 @@
     "css-loader": "5.2.7",
     "datatables.net-dt": "1.10.25",
     "details-polyfill": "1.2.0",
-    "eslint": "6.8.0",
+    "diff": "4.0.1",
+    "eslint": "8.18.0",
     "eslint-plugin-no-jquery": "2.6.0",
-    "eslint-plugin-vue": "7.15.0",
+    "eslint-plugin-vue": "9.1.1",
     "flot": "0.8.3",
+    "isbn3": "1.1.1",
     "jest": "27.5.1",
     "jquery": "3.6.0",
     "jquery-colorbox": "1.6.4",
@@ -92,6 +94,14 @@
     "workbox-webpack-plugin": "6.1.5"
   },
   "jest": {
+    "roots": [
+      "<rootDir>/openlibrary/plugins/openlibrary/js/",
+      "<rootDir>/tests/unit/js/"
+    ],
+    "transform": {
+      "^.+\\.js$": "babel-jest",
+      "^.+\\.(css|less)$": "./tests/unit/js/styleMock.js"
+    },
     "testEnvironment": "jsdom",
     "collectCoverageFrom": [
       "openlibrary/plugins/openlibrary/js/**/*.js"

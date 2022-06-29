@@ -24,7 +24,7 @@ from openlibrary.plugins.upstream import borrow, recentchanges  # TODO: unused i
 from openlibrary.plugins.upstream.utils import render_component
 
 if not config.get('coverstore_url'):
-    config.coverstore_url = "https://covers.openlibrary.org"
+    config.coverstore_url = "https://covers.openlibrary.org"  # type: ignore[attr-defined]
 
 
 class static(delegate.page):
@@ -94,13 +94,17 @@ class library_explorer(delegate.page):
 
 
 class merge_work(delegate.page):
-    path = r"(/works/OL\d+W)/merge"
+    path = "/works/merge"
 
-    def GET(self, key):
-        return "This looks like a good place for a merge UI!"
-
-    def POST(self, key):
-        pass
+    def GET(self):
+        user = web.ctx.site.get_user()
+        has_access = user and (
+            (user.is_admin() or user.is_librarian())
+            and user.is_usergroup_member('/usergroup/librarian-work-merge')
+        )
+        if not has_access:
+            raise web.HTTPError('403 Forbidden')
+        return render_template('merge/works')
 
 
 @web.memoize

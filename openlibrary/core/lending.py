@@ -1,11 +1,12 @@
 """Module for providing core functionality of lending on Open Library.
 """
-from typing import Literal, Optional, List
+from typing import Literal, Optional
 
 import web
 import datetime
-import time
 import logging
+import random
+import time
 import uuid
 
 import eventer
@@ -116,6 +117,7 @@ def compose_ia_url(
     _type: Literal['authors', 'subjects'] = None,
     sorts=None,
     advanced=True,
+    rate_limit_exempt=True,
 ) -> Optional[str]:
     """This needs to be exposed by a generalized API endpoint within
     plugins/api/browse which lets lazy-load more items for
@@ -196,6 +198,8 @@ def compose_ia_url(
         ('page', page),
         ('output', 'json'),
     ]
+    if rate_limit_exempt:
+        params.append(('service', 'metadata__unlimited'))
     if not sorts or not isinstance(sorts, list):
         sorts = ['']
     for sort in sorts:
@@ -204,21 +208,22 @@ def compose_ia_url(
     return base_url + '?' + urlencode(params)
 
 
-def get_random_available_ia_edition():
+def get_random_available_ia_edition() -> str:
     """uses archive advancedsearch to raise a random book"""
     try:
         url = (
             "http://%s/advancedsearch.php?q=_exists_:openlibrary_work"
-            "+AND+(lending___available_to_borrow:true OR lending___available_to_browse:true)"
+            "+AND+(lending___available_to_borrow:true"
+            " OR lending___available_to_browse:true)"
             "&fl=identifier,openlibrary_edition"
-            "&output=json&rows=1&sort[]=random" % (config_bookreader_host)
-        )
+            "&output=json&rows=25&sort[]=random" % (config_bookreader_host)
+        )  # internetarchive/openlibrary#6592: Request 25 editions and randomly choose
         response = requests.get(url, timeout=config_http_request_timeout)
         items = response.json().get('response', {}).get('docs', [])
-        return items[0]["openlibrary_edition"]
+        return random.choice(items)["openlibrary_edition"]
     except Exception:  # TODO: Narrow exception scope
-        logger.exception("get_random_available_ia_edition(%s)" % url)
-        return None
+        logger.exception(f"get_random_available_ia_edition({url})")
+        return ''
 
 
 @public
@@ -239,7 +244,7 @@ def get_groundtruth_availability(ocaid, s3_keys=None):
         response.raise_for_status()
     except requests.HTTPError:
         pass  # TODO: Handle unexpected responses from the availability server.
-    data = response.json().get('lending_status')
+    data = response.json().get('lending_status', {})
     # For debugging
     data['__src__'] = 'core.models.lending.get_groundtruth_availability'
     return data

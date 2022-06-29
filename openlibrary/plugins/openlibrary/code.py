@@ -17,7 +17,7 @@ import infogami
 
 # make sure infogami.config.features is set
 if not hasattr(infogami.config, 'features'):
-    infogami.config.features = []
+    infogami.config.features = []  # type: ignore[attr-defined]
 
 from infogami.utils.app import metapage
 from infogami.utils import delegate
@@ -49,15 +49,15 @@ delegate.app.add_processor(processors.CORSProcessor(cors_prefixes={'/api/'}))
 try:
     from infogami.plugins.api import code as api
 except:
-    api = None
+    api = None  # type: ignore[assignment]
 
 # http header extension for OL API
-infogami.config.http_ext_header_uri = 'http://openlibrary.org/dev/docs/api'
+infogami.config.http_ext_header_uri = 'http://openlibrary.org/dev/docs/api'  # type: ignore[attr-defined]
 
 # setup special connection with caching support
 from openlibrary.plugins.openlibrary import connection
 
-client._connection_types['ol'] = connection.OLConnection
+client._connection_types['ol'] = connection.OLConnection  # type: ignore[assignment]
 infogami.config.infobase_parameters = dict(type='ol')
 
 # set up infobase schema. required when running in standalone mode.
@@ -593,11 +593,9 @@ class opds(delegate.mode):
         if not page:
             raise web.notfound('')
         else:
-            from infogami.utils import template
             from openlibrary.plugins.openlibrary import opds
-
             try:
-                result = template.typetemplate('opds')(page, opds)
+                result = opds.OPDSEntry(page).to_string()
             except:
                 raise web.notfound('')
             else:
@@ -863,7 +861,7 @@ def changequery(query=None, **kw):
 
 from infogami.core.db import get_recent_changes as _get_recentchanges
 
-from six.moves import urllib
+import urllib
 
 
 @public

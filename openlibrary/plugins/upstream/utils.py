@@ -1,10 +1,13 @@
-from typing import List, Union, Tuple, Any
+import functools
+from typing import Iterable, List, Union, Tuple, Any
+import unicodedata
 
 import web
 import json
 import babel
 import babel.core
 import babel.dates
+from babel.lists import format_list
 from collections import defaultdict
 import re
 import random
@@ -16,10 +19,10 @@ from typing import Optional
 
 import requests
 
-import six
-from six.moves import urllib
-from six.moves.collections_abc import MutableMapping
-from six.moves.urllib.parse import (
+from html import unescape
+import urllib
+from collections.abc import MutableMapping
+from urllib.parse import (
     parse_qs,
     urlencode as parse_urlencode,
     urlparse,
@@ -208,6 +211,15 @@ def list_recent_pages(path, limit=100, offset=0):
     # queries are very slow with != conditions
     # q['type'] != '/type/delete'
     return web.ctx.site.get_many(web.ctx.site.things(q))
+
+
+@public
+def commify_list(items: Iterable[Any]):
+    # Not sure why lang is sometimes ''
+    lang = web.ctx.lang or 'en'
+    # If the list item is a template/html element, we strip it
+    # so that there is no space before the comma.
+    return format_list([str(x).strip() for x in items], locale=lang)
 
 
 @public
@@ -518,21 +530,18 @@ def urlencode(dict_or_list_of_tuples: Union[dict, list[tuple[str, Any]]]) -> str
     You probably want to use this, if you're looking to urlencode parameters. This will
     encode things to utf8 that would otherwise cause urlencode to error.
     """
-    from six.moves.urllib.parse import urlencode as og_urlencode
+    from urllib.parse import urlencode as og_urlencode
 
     tuples = dict_or_list_of_tuples
     if isinstance(dict_or_list_of_tuples, dict):
-        tuples = dict_or_list_of_tuples.items()
+        tuples = list(dict_or_list_of_tuples.items())
     params = [(k, v.encode('utf-8') if isinstance(v, str) else v) for (k, v) in tuples]
     return og_urlencode(params)
 
 
 @public
 def entity_decode(text):
-    try:
-        return six.moves.html_parser.unescape(text)
-    except AttributeError:
-        return six.moves.html_parser.HTMLParser().unescape(text)
+    return unescape(text)
 
 
 @public
@@ -615,24 +624,88 @@ def parse_toc(text):
     return [parse_toc_row(line) for line in text.splitlines() if line.strip(" |")]
 
 
-_languages = None
+def safeget(func):
+    """
+    TODO: DRY with solrbuilder copy
+    >>> safeget(lambda: {}['foo'])
+    >>> safeget(lambda: {}['foo']['bar'][0])
+    >>> safeget(lambda: {'foo': []}['foo'][0])
+    >>> safeget(lambda: {'foo': {'bar': [42]}}['foo']['bar'][0])
+    42
+    >>> safeget(lambda: {'foo': 'blah'}['foo']['bar'])
+    """
+    try:
+        return func()
+    except (KeyError, IndexError, TypeError):
+        return None
+
+
+def strip_accents(s: str) -> str:
+    # http://stackoverflow.com/questions/517923/what-is-the-best-way-to-remove-accents-in-a-python-unicode-string
+    try:
+        s.encode('ascii')
+        return s
+    except UnicodeEncodeError:
+        return ''.join(
+            c
+            for c in unicodedata.normalize('NFD', s)
+            if unicodedata.category(c) != 'Mn'
+        )
+
+
+@functools.cache
+def get_languages():
+    keys = web.ctx.site.things({"type": "/type/language", "limit": 1000})
+    return {lang.key: lang for lang in web.ctx.site.get_many(keys)}
+
+
+def autocomplete_languages(prefix: str):
+    def normalize(s: str) -> str:
+        return strip_accents(s).lower()
+
+    prefix = normalize(prefix)
+    user_lang = web.ctx.lang or 'en'
+    for lang in get_languages().values():
+        user_lang_name = safeget(lambda: lang['name_translated'][user_lang][0])
+        if user_lang_name and normalize(user_lang_name).startswith(prefix):
+            yield web.storage(
+                key=lang.key,
+                code=lang.code,
+                name=user_lang_name,
+            )
+            continue
+
+        lang_iso_code = safeget(lambda: lang['identifiers']['iso_639_1'][0])
+        native_lang_name = safeget(lambda: lang['name_translated'][lang_iso_code][0])
+        if native_lang_name and normalize(native_lang_name).startswith(prefix):
+            yield web.storage(
+                key=lang.key,
+                code=lang.code,
+                name=native_lang_name,
+            )
+            continue
+
+        if normalize(lang.name).startswith(prefix):
+            yield web.storage(
+                key=lang.key,
+                code=lang.code,
+                name=lang.name,
+            )
+            continue
+
+
+def get_language(lang_or_key: Union[Thing, str]) -> Thing:
+    if isinstance(lang_or_key, str):
+        return get_languages()[lang_or_key]
+    else:
+        return lang_or_key
 
 
 @public
-def get_languages():
-    global _languages
-    if _languages is None:
-        keys = web.ctx.site.things(
-            {"type": "/type/language", "key~": "/languages/*", "limit": 1000}
-        )
-        _languages = sorted(
-            (
-                web.storage(name=d.name, code=d.code, key=d.key)
-                for d in web.ctx.site.get_many(keys)
-            ),
-            key=lambda d: d.name.lower(),
-        )
-    return _languages
+def get_language_name(lang_or_key: Union[Thing, str]):
+    user_lang = web.ctx.lang or 'en'
+    lang = get_language(lang_or_key)
+    return safeget(lambda: lang['name_translated'][user_lang][0]) or lang.name
 
 
 @public
@@ -756,17 +829,17 @@ class UpstreamMemcacheClient:
 
 
 if config.get('upstream_memcache_servers'):
-    olmemcache.Client = UpstreamMemcacheClient
+    olmemcache.Client = UpstreamMemcacheClient  # type: ignore[assignment, misc]
     # set config.memcache_servers only after olmemcache.Client is updated
-    config.memcache_servers = config.upstream_memcache_servers
+    config.memcache_servers = config.upstream_memcache_servers  # type: ignore[attr-defined]
 
 
 def _get_recent_changes():
     site = web.ctx.get('site') or delegate.create_site()
     web.ctx.setdefault("ip", "127.0.0.1")
 
-    # The recentchanges can have multiple revisions for a document if it has been modified more than once.
-    # Take only the most recent revision in that case.
+    # The recentchanges can have multiple revisions for a document if it has been
+    # modified more than once.  Take only the most recent revision in that case.
     visited = set()
 
     def is_visited(key):

@@ -7,7 +7,7 @@ import web
 from infogami.utils.view import render
 from openlibrary.core import helpers as h
 
-from six.moves import urllib
+import urllib
 
 logger = logging.getLogger("openlibrary.readableurls")
 
@@ -33,7 +33,7 @@ class ReadableUrlProcessor:
         (r'/\w+/ia:[a-zA-Z0-9_\.-]+', '/type/edition', 'title', 'untitled'),
         (r'/\w+/OL\d+A', '/type/author', 'name', 'noname'),
         (r'/\w+/OL\d+W', '/type/work', 'title', 'untitled'),
-        (r'/[/\w]+/OL\d+L', '/type/list', 'name', 'unnamed'),
+        (r'/[/\w\-]+/OL\d+L', '/type/list', 'name', 'unnamed'),
     ]
 
     def __call__(self, handler):

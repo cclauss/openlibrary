@@ -1,5 +1,13 @@
 # Welcome to the Docker Installation Guide for Open Library Developers
 
+## Prerequisites & Troubleshooting
+
+Before attempting to build openlibrary using the Docker instructions below, please follow this checklist. If you encounter an error, this section may serve as a troubleshooting guide:
+
+- Install `docker-ce`: https://docs.docker.com/get-docker/ (tested with version 19.*)
+- Install `docker-compose`: https://docs.docker.com/compose/install/
+- Make sure you `git clone` openlibrary using `ssh` instead of `https` as git submodules (e.g. `infogami` and `acs`) may not fetch correctly otherwise. You can modify an existing openlibrary repository using `git remote rm origin` and then `git remote add origin git@github.com:internetarchive/openlibrary.git`. Then run `git submodule init; git submodule sync; git submodule update` to get rid of the issue.
+
 ## Setup/Teardown Commands
 
 ### For Windows Users Only
@@ -22,14 +30,6 @@ git reset --hard HEAD
 Please use [Docker Desktop >= 4.3.0](https://docs.docker.com/desktop/mac/release-notes/) and make sure that Docker Desktop Preferences `General / Use Docker Compose V2` is checked so that it is no longer required to install Rosetta 2 to run Docker.
 
 If you are experiencing issues building JS, you may need to increase the RAM available to Docker. The defaults of 2GB ram and 1GB Swap are not enough. We recommend requirements of 4GB ram and 2GB swap. This resolved the error message of `Killed` when running `build-assets`.
-
-### Prerequisites & Troubleshooting
-
-Before attempting to build openlibrary using the Docker instructions below, please follow this checklist. If you encounter an error, this section may serve as a troubleshooting guide:
-
-- Install `docker-ce`: https://docs.docker.com/get-docker/ (tested with version 19.*)
-- Install `docker-compose`: https://docs.docker.com/compose/install/
-- Make sure you `git clone` openlibrary using `ssh` instead of `https` as git submodules (e.g. `infogami` and `acs`) may not fetch correctly otherwise. You can modify an existing openlibrary repository using `git remote rm origin` and then `git remote add origin git@github.com:internetarchive/openlibrary.git`
 
 ### For All Users
 All commands are from the project root directory:
@@ -68,7 +68,8 @@ For example, to access Solr admin, go to http://localhost:8983/solr/admin/
 
 While running the `oldev` container, gunicorn is configured to auto-reload modified files. To see the effects of your changes in the running container, the following apply:
 
-- **Editing Python files or web templates?** Simply save the file; gunicorn will auto-reload it.
+- **Editing Python files or web templates (e.g. HTML)?** Simply save the file; gunicorn will auto-reload it.
+    - Note that the home page `openlibrary\templates\home` is cached and each change will take time to apply unless you run `docker-compose restart memcached` which restarts the `memecached` container and renders the change directly. Changing any other web template, auto applies and doesn't need any further commands.
 - **Editing frontend css or js?** Run `docker-compose run --rm home npm run-script build-assets`. This will re-generate the assets in the persistent `ol-build` volume mount (so the latest changes will be available between stopping / starting  `web` containers). Note, if you want to view the generated output you will need to attach to the container (`docker-compose exec web bash`) to examine the files in the volume, not in your local dir.
 - **Watching for file changes (frontend)** To watch for js file changes, run `docker-compose run --rm home npm run-script watch`. Similarly, for css (.less) files, run `docker-compose run --rm home npm run-script watch-css`.
 - **Editing pip packages?** Rebuild the `home` service: `docker-compose build home`

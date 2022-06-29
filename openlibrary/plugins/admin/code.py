@@ -30,6 +30,11 @@ from openlibrary import accounts
 from openlibrary.core import lending, admin as admin_stats, helpers as h, imports, cache
 from openlibrary.core.waitinglist import Stats as WLStats
 from openlibrary.core.sponsorships import summary, sync_completed_sponsored_books
+from openlibrary.core.bookshelves import Bookshelves
+from openlibrary.core.ratings import Ratings
+from openlibrary.core.booknotes import Booknotes
+from openlibrary.core.observations import Observations
+from openlibrary.core.models import Work
 
 from openlibrary.plugins.upstream import forms, spamcheck
 from openlibrary.plugins.upstream.account import send_forgot_password_email
@@ -201,6 +206,63 @@ class add_work_to_staff_picks:
         return delegate.RawText(json.dumps(results), content_type="application/json")
 
 
+class resolve_redirects:
+    def GET(self):
+        return self.main(test=True)
+
+    def POST(self):
+        return self.main(test=False)
+
+    def main(self, test=False):
+        params = web.input(key='', test='')
+
+        # Provide an escape hatch to let POST requests preview
+        if test is False and params.test:
+            test = True
+
+        summary = {'key': params.key, 'redirect_chain': [], 'resolved_key': None}
+        if params.key:
+            redirect_chain = Work.get_redirect_chain(params.key)
+            summary['redirect_chain'] = [
+                {
+                    "key": thing.key,
+                    "occurrences": {},
+                    "updates": {}
+                } for thing in redirect_chain
+            ]
+            summary['resolved_key'] = redirect_chain[-1].key
+
+            for r in summary['redirect_chain']:
+                olid = r['key'].split('/')[-1][2:-1]
+                new_olid = summary['resolved_key'].split('/')[-1][2:-1]
+
+                # count reading log entries
+                r['occurrences']['readinglog'] = len(
+                    Bookshelves.get_works_shelves(olid))
+                r['occurrences']['ratings'] = len(
+                    Ratings.get_all_works_ratings(olid))
+                r['occurrences']['booknotes'] = len(
+                    Booknotes.get_booknotes_for_work(olid))
+                r['occurrences']['observations'] = len(
+                    Observations.get_observations_for_work(olid))
+
+                # track updates
+                r['updates']['readinglog'] = Bookshelves.update_work_id(
+                    olid, new_olid, _test=test
+                )
+                r['updates']['ratings'] = Ratings.update_work_id(
+                    olid, new_olid, _test=test
+                )
+                r['updates']['booknotes'] = Booknotes.update_work_id(
+                    olid, new_olid, _test=test
+                )
+                r['updates']['observations'] = Observations.update_work_id(
+                    olid, new_olid, _test=test
+                )
+
+        return delegate.RawText(
+            json.dumps(summary), content_type="application/json")
+
 class sync_ol_ia:
     def GET(self):
         """Updates an Open Library edition's Archive.org item by writing its
@@ -228,7 +290,7 @@ class people_view:
         if not user:
             raise web.notfound()
 
-        i = web.input(action=None, tag=None, bot=None)
+        i = web.input(action=None, tag=None, bot=None, dry_run=None)
         if i.action == "update_email":
             return self.POST_update_email(user, i)
         elif i.action == "update_password":
@@ -253,6 +315,9 @@ class people_view:
             return self.POST_set_bot_flag(user, i.bot)
         elif i.action == "su":
             return self.POST_su(user)
+        elif i.action == "anonymize_account":
+            test = True if i.dry_run else False
+            return self.POST_anonymize_account(user, test)
         else:
             raise web.seeother(web.ctx.path)
 
@@ -338,6 +403,18 @@ class people_view:
         code = account.generate_login_code()
         web.setcookie(config.login_cookie_name, code, expires="")
         return web.seeother("/")
+
+    def POST_anonymize_account(self, account, test):
+        results = account.anonymize(test=test)
+        msg = (
+            f"Account anonymized. New username: {results['new_username']}. "
+            f"Notes deleted: {results['booknotes_count']}. "
+            f"Ratings updated: {results['ratings_count']}. "
+            f"Observations updated: {results['observations_count']}. "
+            f"Bookshelves updated: {results['bookshelves_count']}."
+        )
+        add_flash_message("info", msg)
+        raise web.seeother(web.ctx.path)
 
 
 class people_edits:
@@ -829,6 +906,8 @@ def setup():
     register_admin_page('/admin/permissions', permissions, label="")
     register_admin_page('/admin/solr', solr, label="", librarians=True)
     register_admin_page('/admin/sync', sync_ol_ia, label="", librarians=True)
+    register_admin_page('/admin/resolve_redirects', resolve_redirects, label="Resolve Redirects")
+
     register_admin_page(
         '/admin/staffpicks', add_work_to_staff_picks, label="", librarians=True
     )

@@ -1,3 +1,4 @@
+from typing import Any, Callable, Iterable, Mapping
 import web
 import logging
 import json
@@ -19,7 +20,10 @@ import infogami.core.code as core
 from openlibrary import accounts
 from openlibrary.i18n import gettext as _
 from openlibrary.core import helpers as h, lending
+from openlibrary.core.booknotes import Booknotes
 from openlibrary.core.bookshelves import Bookshelves
+from openlibrary.core.observations import Observations
+from openlibrary.core.ratings import Ratings
 from openlibrary.plugins.recaptcha import recaptcha
 from openlibrary.plugins.upstream.mybooks import MyBooksTemplate
 from openlibrary.plugins import openlibrary as olib
@@ -32,7 +36,7 @@ from openlibrary.accounts import (
 )
 from openlibrary.plugins.upstream import borrow, forms, utils
 
-from six.moves import urllib
+import urllib
 
 
 logger = logging.getLogger("openlibrary.account")
@@ -265,7 +269,7 @@ class account_create(delegate.page):
         )
 
     def POST(self):
-        f = self.get_form()  # type: forms.RegisterForm
+        f: forms.RegisterForm = self.get_form()
 
         if f.validates(web.input()):
             try:
@@ -386,8 +390,8 @@ class account_login(delegate.page):
             email,
             i.password,
             require_link=True,
-            s3_access_key=i.access,
-            s3_secret_key=i.secret,
+            s3_access_key=i.access or web.ctx.env.get('HTTP_X_S3_ACCESS'),
+            s3_secret_key=i.secret or web.ctx.env.get('HTTP_X_S3_SECRET'),
             test=i.test,
         )
         error = audit.get('error')
@@ -803,13 +807,85 @@ class fetch_goodreads(delegate.page):
         return render['account/import'](books, books_wo_isbns)
 
 
+def csv_header_and_format(row: Mapping[str, Any]) -> tuple[str, str]:
+    """
+    Convert the keys of a dict into csv header and format strings for generating a
+    comma separated values string.  This will only be run on the first row of data.
+    >>> csv_header_and_format({"item_zero": 0, "one_id_id": 1, "t_w_o": 2, "THREE": 3})
+    ('Item Zero,One Id ID,T W O,Three', '{item_zero},{one_id_id},{t_w_o},{THREE}')
+    """
+    return (  # The .replace("_Id,", "_ID,") converts "Edition Id" --> "Edition ID"
+        ",".join(fld.replace("_", " ").title() for fld in row).replace(" Id,", " ID,"),
+        ",".join("{%s}" % field for field in row),
+    )
+
+
+def csv_string(source: Iterable[Mapping], row_formatter: Callable = None) -> str:
+    """
+    Given an list of dicts, generate comma separated values where each dict is a row.
+    An optional reformatter function can be provided to transform or enrich each dict.
+    The order and names of the formatter's the output dict keys will determine the
+    order and header column titles of the resulting csv string.
+    :param source: An iterable of all the rows that should appear in the csv string.
+    :param formatter: A Callable that accepts a Mapping and returns a dict.
+    >>> csv = csv_string([{"row_id": x, "t w o": 2, "upper": x.upper()} for x in "ab"])
+    >>> csv.splitlines()
+    ['Row ID,T W O,Upper', 'a,2,A', 'b,2,B']
+    """
+    if not row_formatter:  # The default formatter reuses the inbound dict unmodified
+
+        def row_formatter(row: dict) -> dict:
+            return row
+
+    def csv_body() -> Iterable[str]:
+        """
+        On the first row, use csv_header_and_format() to get and yield the csv_header.
+        Then use csv_format to yield each row as a string of comma separated values.
+        """
+        assert row_formatter, "Placate mypy."
+        for i, row in enumerate(source):
+            if i == 0:  # Only on first row, make header and format from the dict keys
+                csv_header, csv_format = csv_header_and_format(row_formatter(row))
+                yield csv_header
+            yield csv_format.format(**row_formatter(row))
+
+    return '\n'.join(csv_body())
+
+
 class export_books(delegate.page):
     path = "/account/export"
 
+    date_format = '%Y-%m-%d %H:%M:%S'
+
     @require_login
     def GET(self):
+        i = web.input(type='')
+        filename = ''
+
         user = accounts.get_current_user()
         username = user.key.split('/')[-1]
+
+        if i.type == 'reading_log':
+            data = self.generate_reading_log(username)
+            filename = 'OpenLibrary_ReadingLog.csv'
+        elif i.type == 'book_notes':
+            data = self.generate_book_notes(username)
+            filename = 'OpenLibrary_BookNotes.csv'
+        elif i.type == 'reviews':
+            data = self.generate_reviews(username)
+            filename = 'OpenLibrary_Reviews.csv'
+        elif i.type == 'lists':
+            data = self.generate_list_overview(user.get_lists(limit=1000))
+            filename = 'Openlibrary_ListOverview.csv'
+        elif i.type == 'ratings':
+            data = self.generate_star_ratings(username)
+            filename = 'OpenLibrary_Ratings.csv'
+
+        web.header('Content-Type', 'text/csv')
+        web.header('Content-disposition', f'attachment; filename={filename}')
+        return delegate.RawText('' or data, content_type="text/csv")
+
+    def generate_reading_log(self, username):
         books = Bookshelves.get_users_logged_books(username, limit=10000)
         csv = []
         csv.append('Work Id,Edition Id,Bookshelf\n')
@@ -821,12 +897,70 @@ class export_books(delegate.page):
                 '{}\n'.format(mapping[book['bookshelf_id']]),
             ]
             csv.append(','.join(row))
-        web.header('Content-Type', 'text/csv')
-        web.header(
-            'Content-disposition', 'attachment; filename=OpenLibrary_ReadingLog.csv'
-        )
-        csv = ''.join(csv)
-        return delegate.RawText(csv, content_type="text/csv")
+        return ''.join(csv)
+
+    def generate_book_notes(self, username: str) -> str:
+        def format_booknote(booknote: Mapping) -> dict:
+            escaped_note = booknote['notes'].replace('"', '""')
+            return {
+                "work_id": f"OL{booknote['work_id']}W",
+                "edition_id": f"OL{booknote['edition_id']}M",
+                "note":  f'"{escaped_note}"',
+                "created_on": booknote['created'].strftime(self.date_format),
+            }
+
+        return csv_string(Booknotes.select_all_by_username(username), format_booknote)
+
+    def generate_reviews(self, username: str) -> str:
+        def format_observation(observation: Mapping) -> dict:
+            return {
+                "work_id": f"OL{observation['work_id']}W",
+                "review_category": f'"{observation["observation_type"]}"',
+                "review_value": f'"{observation["observation_value"]}"',
+                "created_on": observation['created'].strftime(self.date_format),
+            }
+
+        observations = Observations.select_all_by_username(username)
+        return csv_string(observations, format_observation)
+
+    def generate_list_overview(self, lists):
+        csv = []
+        csv.append('List ID,List Name,List Description,Entry,Created On,Last Updated')
+
+        for list in lists:
+            list_id = list.key.split('/')[-1]
+            created_on = list.created.strftime(self.date_format)
+            last_updated = list.last_modified.strftime(self.date_format) if list.last_modified else ''
+            for seed in list.seeds:
+                entry = seed
+                if not isinstance(seed, str):
+                    entry = seed.key
+                list_name = list.name.replace('"', '""') if list.name else ''
+                list_desc = list.description.replace('"', '""') if list.description else ''
+                row = [
+                    list_id,
+                    f'"{list_name}"',
+                    f'"{list_desc}"',
+                    entry,
+                    created_on,
+                    last_updated
+                ]
+                csv.append(','.join(row))
+
+        return '\n'.join(csv)
+
+    def generate_star_ratings(self, username: str) -> str:
+        def format_rating(rating: Mapping) -> dict:
+            if edition_id := rating.get("edition_id") or "":
+                edition_id = f"OL{edition_id}M"
+            return {
+                "Work ID": f"OL{rating['work_id']}W",
+                "Edition ID": edition_id,
+                "Rating": f"{rating['rating']}",
+                "Created On": rating['created'].strftime(self.date_format),
+            }
+
+        return csv_string(Ratings.select_all_by_username(username), format_rating)
 
 
 class account_loans(delegate.page):
@@ -858,13 +992,8 @@ class account_loans_json(delegate.page):
 class account_waitlist(delegate.page):
     path = "/account/waitlist"
 
-    @require_login
     def GET(self):
-        user = accounts.get_current_user()
-        username = user['key'].split('/')[-1]
-
-        return MyBooksTemplate(username, 'waitlist').render()
-
+        raise web.seeother("/account/loans")
 
 # Disabling be cause it prevents account_my_books_redirect from working
 # for some reason. The purpose of this class is to not show the "Create" link for

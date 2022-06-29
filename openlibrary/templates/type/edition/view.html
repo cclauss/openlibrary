@@ -24,24 +24,35 @@ $if page.key.startswith('/books'):
   $# We are on an editions page: an edition has been explicitly selected
   $ edition = page
 
+$ selected_provider = None
+$ selected_id = None
+$ provider = None
+$if query_param('edition'):
+  $if ':' in query_param('edition'):
+    $ [selected_provider, selected_id] = query_param('edition').split(':')
+  $else:
+    $ [selected_provider, selected_id] = ['ia', query_param('edition')]
+  $ provider = get_book_provider_by_name(selected_provider)
+
 $ component_times['get_sorted_editions'] = time()
 
 $# Fetch a work's editions
 $# Used for loading the editions table
 $# Book availability of editions injected by bulk get_availability API
 $ edition_count = work.edition_count if work and work.edition_count else 1
-$ ebooks_only = query_param('mode') == 'ebooks' or (query_param('mode') != 'all' and edition_count > 10)
+$ ebooks_only = (query_param('mode') == 'ebooks') or (query_param('mode') != 'all' and edition_count > 10)
 
 $# For performance reasons, limit to 10 ebooks
 $# Tradeoff: limits our ability to select best edition
-$ editions_limit = None if not query_param('mode') else 10
+$ editions_limit = None if query_param('mode') in ['all', 'ebooks'] else 10
+$# key ensures the current edition we're on or requested edition are fetched by get_sorted_editions
+$ keys = (edition and [edition.key]) or (provider and provider.get_olids(selected_id))
 $if ebooks_only:
-  $ editions = work.get_sorted_editions(ebooks_only=ebooks_only, limit=editions_limit, keys=edition and [edition.key])
-
+  $ editions = work.get_sorted_editions(ebooks_only=ebooks_only, limit=editions_limit, keys=keys)
 $if not editions:
   $# use ebooks_only to determine whether to lazyload editions table
   $ ebooks_only = False
-  $ editions = work.get_sorted_editions(limit=editions_limit, covers_only=True)
+  $ editions = work.get_sorted_editions(limit=editions_limit, keys=keys)
 $ availabilities = {e.availability.get('identifier'): e.availability for e in editions}
 $ component_times['get_sorted_editions'] = time() - component_times['get_sorted_editions']
 
@@ -49,21 +60,17 @@ $# This collects which books are previewable in any manner
 $ previews = [e for e in editions if e.get('ocaid')]
 
 $# Choose an edition to render
-$if not edition:
+$if editions and not edition:
   $# We're presumably on a work url
   $# edition selection strategy (e.g. language, by id, first w/ ocaid)
-  $if query_param('edition'):
-    $if ':' in query_param('edition'):
-      $ [selected_provider, selected_id] = query_param('edition').split(':')
-    $else:
-      $ [selected_provider, selected_id] = ['ia', query_param('edition')]
-    $ provider = get_book_provider_by_name(selected_provider)
-    $ edition = next((e for e in editions if selected_id in provider.get_identifiers(e)), edition)
+  $if provider:
+    $ edition = next((e for e in editions if selected_id in provider.get_identifiers(e)), editions[0])
   $else:
     $ edition, provider = get_best_edition(editions)
 
 $# Just in case edition is not set, treat as work
 $ edition = edition or page
+$ is_editionless_work = edition.type != '/type/edition'
 
 $if not edition.get('availability'):
   $ edition['availability'] = edition.get('ocaid') and availabilities.get(edition['ocaid']) or {}
@@ -81,7 +88,7 @@ $var title: $title
 
 $code:
     def has_any(*keys):
-        return any(page[k] for k in keys)
+        return any(edition[k] for k in keys)
 
 $code:
     def get_description(book):
@@ -111,17 +118,6 @@ $code:
         return meta
     description = get_description(page)
     putctx("description", description)
-
-$code:
-    def get_authors_byline(page, include_schema=False):
-        schema_attribute = cond(include_schema, ' itemprop="author"', '')
-        authors = cond(work, work and work.get_authors(), edition and edition.get_authors())
-        if authors:
-            return ', '.join('<a href="%s"%s>%s</a>' % (a.url(), schema_attribute, truncate(a.name, 40)) if a.name else "<em>Unknown author</em>" for a in authors)
-        elif (edition or work).author_names:
-            return ('<span%s>' % (schema_attribute)) + ", ".join((edition or work).author_names) + "</span>"
-        else:
-            return None
 
 $def display_value(label, value, itemprop=None):
     $if value:
@@ -156,13 +152,17 @@ $def display_goodreads(label, ids):
         $for id in ids:
             <dd><a href="$id.url">$id.value</a></dd>
 
-$ authors_byline = get_authors_byline(page, include_schema=True)
-
 $:macros.Metatags(title=title_with_site, image=meta_cover_url, description=description)
 $set_share_links(url=request.canonical_url, title=title, view_context=ctx)
 
 $if is_privileged_user:
   $:render_template("type/edition/admin_bar", work, edition, ocaid)
+
+$ component_times['ReadlogStats'] = time()
+$ star_ratings_stats = macros.StarRatingsStats(work)
+$ component_times['ReadlogStats'] = time() - component_times['ReadlogStats']
+
+$ render_summary= render_template("type/edition/title_summary", work, edition, ocaid, work_title, star_ratings_stats)
 
 <div id="contentBody" role="main" itemscope itemtype="https://schema.org/Book">
   <div class="workDetails">
@@ -170,7 +170,13 @@ $if is_privileged_user:
         <link itemprop="exampleOfWork" href="$work.key">
 
     <div class="editionCover">
-      $:macros.databarWork(edition or work, editions_page=True, render_times=component_times)
+      $ share_url = request.home + (edition or work).key
+
+      $ component_times['databarWork: Modal Links'] = time()
+      $ modal_links = render_template("type/edition/modal_links", work, edition, share_url)
+      $ component_times['databarWork: Modal Links'] = time() - component_times['databarWork: Modal Links']
+
+      $:macros.databarWork(edition or work, editions_page=True, render_times=component_times,summary=render_summary, modal_links=modal_links)
     </div>
 
     <div class="editionAbout">
@@ -179,25 +185,19 @@ $if is_privileged_user:
         $:macros.databarView(page, edition)
         $ component_times['EditTopbar'] = time() - component_times['EditTopbar']
       </div>
+    <!--This section appears only in desktop-->
+    <div class="desktop-book-header">
+      $:render_summary
 
-      <div class="work-line">
-        $_("An edition of") <a href="$work.key?edition=$(ocaid)">$work_title$cond(work.subtitle, ': %s' % work.subtitle)</a>
-        $if work.first_publish_year:
-            <span class="first-published-date" title="$_('First published in %s', work.first_publish_year)">
-              ($work.first_publish_year)
-            </span>
-      </div>
-
-      $:render_template("type/edition/book_title", work, edition)
-
-      $if authors_byline:
-        $# authors_byline susceptible to xss!
-        <h2 class="edition-byline">$_("by") $:authors_byline</h2>
-
-      $ component_times['ReadlogStats'] = time()
-      $:macros.StarRatingsStats(work)
-      $ component_times['ReadlogStats'] = time() - component_times['ReadlogStats']
-
+      $if page.type.key in ["/type/work", "/type/edition", "/type/author"]:
+        $if edition and page.type.key in ["/type/work"]:
+          $ edit_url = edition.url(suffix="/edit")
+        $else:
+          $ edit_url = page.url(suffix="/edit")
+      $else:
+        $ edit_url = page.key + "?m=edit"
+    </div>
+      $:render_template("type/edition/compact_title", book_title, edit_url)
       $:macros.EditionNavBar(work.edition_count, show_observations)
       <a id="edition-overview" name="edition-overview"></a>
       <div>
@@ -243,27 +243,28 @@ $if is_privileged_user:
                 </div>
 
               $ edition_identifiers = edition.get_identifiers()
-              $ isbn = None
-              $if 'isbn_13' in edition_identifiers.keys():
-                $ isbn = edition_identifiers['isbn_13']['value']
-              $elif 'isbn_10' in edition_identifiers.keys():
-                $ isbn = edition_identifiers['isbn_10']['value']
-              $if isbn:
+              $ isbns = []
+              $for name, values in edition_identifiers.multi_items():
+                $if name in ["isbn_10", "isbn_13"]:
+                  $for value in values:
+                    $isbns.append(value['value'])
+              $if isbns:
                 <div class="edition-omniline-item">
-                  <div>ISBN</div>
-                  <span>$isbn</span>
+                  <div>ISBNs</div>
+                  $for isbn in isbns:
+                    <span>$isbn</span>
                 </div>
           </div>
       </div>
 
       $ seen = set()
-      $if previews:
+      $if previews and any([len(e.languages) for e in previews]):
         <p class="preview-languages">
           Previews available in:
           $for e in previews:
             $if e.languages[0].name not in seen:
               $ seen.add(e.languages[0].name)
-              <a href="$work.key?edition=$(e.ocaid)">$e.languages[0].name</a>
+              <a href="$work.key?edition=$(e.ocaid)">$get_language_name(e.languages[0].key)</a>
         </p>
 
       $if work and work.description or edition and edition.description:
@@ -303,19 +304,6 @@ $if is_privileged_user:
 
       <a id="details" name="details" class="section-anchor"></a>
       <div class="tab-section edition-info">
-        $if not page.is_fake_record():
-          $if page.type.key in ["/type/work", "/type/edition", "/type/author"]:
-            $if edition and page.type.key in ["/type/work"]:
-                $ edit_url = edition.url(suffix="/edit")
-            $else:
-                $ edit_url = page.url(suffix="/edit")
-          $else:
-            $ edit_url = page.key + "?m=edit"
-          <div class="editButton">
-            <!-- FIXME: accesskey / keyboard shortcut needs i18n -->
-            <a class="linkButton larger" href="$edit_url" title="$_('Edit this template')"
-              data-ol-link-track="CTAClick|Edit" accesskey="e">$_("Edit")</a>
-          </div>
         $if edition:
           <h2 class="details-title" itemprop="name">$_("Book Details")</h2>
           <hr>
@@ -324,10 +312,7 @@ $if is_privileged_user:
               <h3 class="edition-header">$_('Published in')</h3>
               <p>
               $for p in edition.publish_places:
-                <a href="/search/subjects?q=$p.replace('&','%26').replace(' ','%20')"
-                  title="$_('Search for subjects about %(place)s', place=p)">
-                    $p
-                </a>$cond(loop.last, "", ", ")
+                $(p)$cond(loop.last, "", ", ")
               </p>
             </div>
           $if edition.first_sentence:
@@ -336,7 +321,6 @@ $if is_privileged_user:
             <p>"$(edition.first_sentence)"</p>
             </div>
 
-        $if edition:
           $ component_times['TableOfContents'] = time()
           $:macros.TableOfContents(edition, ocaid)
           $ component_times['TableOfContents'] = time() - component_times['TableOfContents']
@@ -496,7 +480,7 @@ $if is_privileged_user:
                 $:render_template("lists/widget", work, include_header=False, include_widget=False)
                 $ component_times['lists widget: WorkListTime'] = time() - component_times['lists widget: WorkListTime']
 
-              $if edition:
+              $if edition and is_editionless_work:
                 $ component_times['lists widget: EditionListTime'] = time()
                 $:render_template("lists/widget", edition, include_header=False, include_widget=False)
                 $ component_times['lists widget: EditionListTime'] = time() - component_times['lists widget: EditionListTime']
@@ -507,6 +491,7 @@ $if is_privileged_user:
   </div>
 
   $ component_times['RelatedWorksCarousel'] = time()
+  <a id="related-work-carousel" name="related-work-carousel tab-section" class="section-anchor"></a>
   <div class="RelatedWorksCarousel" data-workid="$work.key.split('/')[-1]">
     <div class="hidden loadingIndicator">
         <figure>

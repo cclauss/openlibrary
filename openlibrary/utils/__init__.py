@@ -1,5 +1,6 @@
 """Generic utilities"""
 
+from enum import Enum
 import re
 from subprocess import PIPE, Popen, STDOUT
 from typing import TypeVar, Iterable, Literal, Callable, Optional
@@ -127,20 +128,32 @@ def dicthash(d):
         return d
 
 
-author_olid_re = re.compile(r'^OL\d+A$')
+author_olid_embedded_re = re.compile(r'OL\d+A', re.IGNORECASE)
+
+def find_author_olid_in_string(s):
+    """
+    >>> find_author_olid_in_string("ol123a")
+    'OL123A'
+    >>> find_author_olid_in_string("/authors/OL123A/edit")
+    'OL123A'
+    >>> find_author_olid_in_string("some random string")
+    """
+    found = re.search(author_olid_embedded_re, s)
+    return found and found.group(0).upper()
 
 
-def is_author_olid(s):
-    """Case sensitive check for strings like 'OL123A'."""
-    return bool(author_olid_re.match(s))
+work_olid_embedded_re = re.compile(r'OL\d+W', re.IGNORECASE)
 
-
-work_olid_re = re.compile(r'^OL\d+W$')
-
-
-def is_work_olid(s):
-    """Case sensitive check for strings like 'OL123W'."""
-    return bool(work_olid_re.match(s))
+def find_work_olid_in_string(s):
+    """
+    >>> find_work_olid_in_string("ol123w")
+    'OL123W'
+    >>> find_work_olid_in_string("/works/OL123W/Title_of_book")
+    'OL123W'
+    >>> find_work_olid_in_string("some random string")
+    """
+    found = re.search(work_olid_embedded_re, s)
+    return found and found.group(0).upper()
 
 
 def extract_numeric_id_from_olid(olid):
@@ -170,3 +183,26 @@ def is_number(s):
 def get_software_version():  # -> str:
     cmd = "git rev-parse --short HEAD --".split()
     return str(Popen(cmd, stdout=PIPE, stderr=STDOUT).stdout.read().decode().strip())
+
+
+# See https://docs.python.org/3/library/enum.html#orderedenum
+class OrderedEnum(Enum):
+    def __ge__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value >= other.value
+        return NotImplemented
+
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value > other.value
+        return NotImplemented
+
+    def __le__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value <= other.value
+        return NotImplemented
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented

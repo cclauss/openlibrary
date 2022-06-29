@@ -8,8 +8,6 @@ import web
 import datetime
 from collections import defaultdict
 
-import six
-
 
 class DocumentLoader:
     def __init__(self, **params):
@@ -76,7 +74,7 @@ class DocumentLoader:
         """
         return self._bulk_new(documents, author, comment)
 
-    @_with_transaction
+    @_with_transaction  # type: ignore[arg-type]
     def _bulk_new(self, documents, author, comment):
         timestamp = datetime.datetime.utcnow()
         type_ids = self.get_thing_ids(doc['type']['key'] for doc in documents)
@@ -183,7 +181,7 @@ class DocumentLoader:
         """
         return self._bulk_update(documents, author, comment)
 
-    @_with_transaction
+    @_with_transaction  # type: ignore[arg-type]
     def _bulk_update(self, documents, author, comment):
         timestamp = datetime.datetime.utcnow()
 

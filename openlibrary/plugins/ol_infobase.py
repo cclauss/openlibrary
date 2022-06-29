@@ -10,13 +10,12 @@ import os
 import re
 import sys
 import traceback
-import unicodedata
 
 import requests
-import six
 import web
 
 from infogami.infobase import cache, common, config, dbstore, server
+from openlibrary.plugins.upstream.utils import strip_accents
 
 from ..utils.isbn import isbn_10_to_isbn_13, isbn_13_to_isbn_10, normalize_isbn
 
@@ -38,7 +37,7 @@ def init_plugin():
     dbstore.Indexer = OLIndexer
 
     if config.get('errorlog'):
-        common.record_exception = lambda: save_error(config.errorlog, 'infobase')
+        common.record_exception = lambda: save_error(config.errorlog, 'infobase')  # type: ignore[attr-defined]
 
     ol = server.get_site('openlibrary.org')
     ib = server._infobase
@@ -556,7 +555,7 @@ _Indexer = dbstore.Indexer
 re_normalize = re.compile('[^[:alphanum:] ]', re.U)
 
 
-class OLIndexer(_Indexer):
+class OLIndexer(_Indexer):  # type: ignore[misc,valid-type]
     """OL custom indexer to index normalized_title etc."""
 
     def compute_index(self, doc):
@@ -591,14 +590,6 @@ class OLIndexer(_Indexer):
 
         if not isinstance(title, str):
             return ""
-
-        # http://stackoverflow.com/questions/517923/what-is-the-best-way-to-remove-accents-in-a-python-unicode-string
-        def strip_accents(s):
-            return ''.join(
-                c
-                for c in unicodedata.normalize('NFD', s)
-                if unicodedata.category(c) != 'Mn'
-            )
 
         norm = strip_accents(title).lower()
         norm = norm.replace(' and ', ' ')

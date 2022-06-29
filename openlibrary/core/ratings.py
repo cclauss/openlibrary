@@ -15,12 +15,15 @@ class WorkRatingsSummary(TypedDict):
     ratings_count_5: int
 
 
-class Ratings:
+class Ratings(db.CommonExtras):
 
+    TABLENAME = "ratings"
     VALID_STAR_RATINGS = range(6)  # inclusive: [0 - 5] (0-5 star)
+    PRIMARY_KEY = ["username", "work_id"]
+    ALLOW_DELETE_ON_CONFLICT = True
 
     @classmethod
-    def summary(cls):
+    def summary(cls) -> dict:
         return {
             'total_books_starred': {
                 'total': Ratings.total_num_books_rated(),
@@ -31,7 +34,7 @@ class Ratings:
         }
 
     @classmethod
-    def total_num_books_rated(cls, since=None, distinct=False):
+    def total_num_books_rated(cls, since=None, distinct=False) -> Optional[int]:
         oldb = db.get_db()
         query = "SELECT count(%s work_id) from ratings" % (
             'DISTINCT' if distinct else ''
@@ -42,7 +45,7 @@ class Ratings:
         return results[0] if results else None
 
     @classmethod
-    def total_num_unique_raters(cls, since=None):
+    def total_num_unique_raters(cls, since=None) -> Optional[int]:
         oldb = db.get_db()
         query = "select count(DISTINCT username) from ratings"
         if since:
@@ -51,7 +54,7 @@ class Ratings:
         return results[0] if results else None
 
     @classmethod
-    def most_rated_books(cls, limit=10, since=False):
+    def most_rated_books(cls, limit=10, since=False) -> list:
         oldb = db.get_db()
         query = 'select work_id, count(*) as cnt from ratings '
         if since:
@@ -60,13 +63,13 @@ class Ratings:
         return list(oldb.query(query, vars={'limit': limit, 'since': since}))
 
     @classmethod
-    def get_users_ratings(cls, username):
+    def get_users_ratings(cls, username) -> list:
         oldb = db.get_db()
         query = 'select * from ratings where username=$username'
         return list(oldb.query(query, vars={'username': username}))
 
     @classmethod
-    def get_rating_stats(cls, work_id):
+    def get_rating_stats(cls, work_id) -> dict:
         oldb = db.get_db()
         query = (
             "SELECT AVG(rating) as avg_rating, COUNT(DISTINCT username) as num_ratings"
@@ -98,10 +101,10 @@ class Ratings:
         return result[0] if result else None
 
     @classmethod
-    def get_all_works_ratings(cls, work_id):
+    def get_all_works_ratings(cls, work_id) -> list:
         oldb = db.get_db()
         query = 'select * from ratings where work_id=$work_id'
-        return list(oldb.query(query, vars={'work_id': work_id}))
+        return list(oldb.query(query, vars={'work_id': int(work_id)}))
 
     @classmethod
     def get_users_rating_for_work(cls, username, work_id):

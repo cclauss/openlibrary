@@ -8,7 +8,7 @@ import web
 import re
 import json
 from collections import defaultdict
-
+from openlibrary.views.loanstats import get_trending_books
 from infogami import config
 from infogami.utils import delegate
 from infogami.utils.view import render_template  # noqa: F401 used for its side effects
@@ -25,9 +25,8 @@ from openlibrary.core.observations import Observations, get_observation_metrics
 from openlibrary.core.models import Booknotes, Work
 from openlibrary.core.sponsorships import qualifies_for_sponsorship
 from openlibrary.core.vendors import (
-    get_amazon_metadata,
     create_edition_from_amazon_metadata,
-    search_amazon,
+    get_amazon_metadata,
     get_betterworldbooks_metadata,
 )
 
@@ -61,6 +60,29 @@ class book_availability(delegate.page):
             else []
         )
 
+class trending_books_api(delegate.page):
+    path = "/trending(/?.*)"
+    #path = "/trending/(now|daily|weekly|monthly|yearly|forever)"
+    encoding = "json"
+
+    def GET(self, period="/daily"):
+        from openlibrary.views.loanstats import SINCE_DAYS
+        period = period[1:]  # remove slash
+        i = web.input(page=1, limit=100)
+        works = get_trending_books(
+            since_days=SINCE_DAYS[period],
+            limit=int(i.limit),
+            page=int(i.page),
+            books_only=True
+        )
+        result = {
+            'query': f"/trending/{period}",
+            'works': [dict(work) for work in works],
+        }
+        return delegate.RawText(
+            json.dumps(result),
+            content_type="application/json"
+        )
 
 class browse(delegate.page):
     path = "/browse"
@@ -68,7 +90,8 @@ class browse(delegate.page):
 
     def GET(self):
         i = web.input(
-            q='', page=1, limit=100, subject='', work_id='', _type='', sorts=''
+            q='', page=1, limit=100, subject='',
+            work_id='', _type='', sorts=''
         )
         sorts = i.sorts.split(',')
         page = int(i.page)
@@ -395,34 +418,6 @@ class author_works(delegate.page):
             links['next'] = web.changequery(offset=offset + limit)
 
         return {"links": links, "size": size, "entries": works}
-
-
-class amazon_search_api(delegate.page):
-    """Librarian + admin only endpoint to check for books
-    available on Amazon via the Product Advertising API
-    ItemSearch operation.
-
-    https://docs.aws.amazon.com/AWSECommerceService/latest/DG/ItemSearch.html
-
-    Currently experimental to explore what data is available to affiliates.
-
-    :return: JSON {"results": []} containing Amazon product metadata
-             for items matching the title and author search parameters.
-    :rtype: str
-    """
-
-    path = '/_tools/amazon_search'
-
-    @jsonapi
-    def GET(self):
-        user = accounts.get_current_user()
-        if not (user and (user.is_admin() or user.is_librarian())):
-            return web.HTTPError('403 Forbidden')
-        i = web.input(title='', author='')
-        if not (i.author or i.title):
-            return json.dumps({'error': 'author or title required'})
-        results = search_amazon(title=i.title, author=i.author)
-        return json.dumps(results)
 
 
 class sponsorship_eligibility_check(delegate.page):

@@ -4,6 +4,14 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+    paths-ignore:
+      - '.github/workflows/javascript_tests.yml'
+      - 'vendor/js/**'
+      - 'package*.json'
+      - '**.js'
+      - '**.vue'
+      - '**.less'
+      - '**.css'
 jobs:
   python_tests:
     strategy:
@@ -15,7 +23,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: true
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - uses: actions/cache@v3

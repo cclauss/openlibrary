@@ -1,10 +1,10 @@
-from py.test import config
+# from py.test import config
 import web
 import json
 
 import cookielib
 
-from six.moves import urllib
+import urllib
 
 
 def pytest_funcarg__config(request):
